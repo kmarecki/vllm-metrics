@@ -249,48 +249,6 @@ All metrics come from vLLM's Prometheus `/metrics` endpoint.
 | request_prefill_time_seconds | Time in prefill phase |
 | request_decode_time_seconds | Time in decode phase |
 
-## Sample Report
-
-```
-======================================================================
-  vLLM USAGE STATISTICS REPORT
-======================================================================
-  Period:              2026-06-01  to  2026-06-07
-  Models tracked:      3
-
-  GLOBAL TOTALS
-  ----------------------------------------------------------------
-  Total tokens processed (prompt + generation)        14.2M
-    Prompt tokens                                      3.1M
-    Generation tokens                                 11.1M
-    From prefix cache                                  2.4M
-    Prefix cache hit rate                              77.4%
-  Completed requests                                   8,520
-  Preemptions                                             12
-  Active days                                             7
-  Avg prompt tokens per request                          364
-  Avg generation tokens per request                     1303
-
-  PER-MODEL BREAKDOWN
-  ----------------------------------------------------------------
-  [spark-1]  Mistral-Small-4-119B-2603-NVFP4
-    Total tokens                                      14.2M
-    Prompt tokens                                      3.1M
-    Generation tokens                                 11.1M
-    Requests                                          8,520
-    Avg TTFT                                         342.5ms
-    Avg ITL/TPOT                                       18.3ms
-
-  DAILY TREND
-  ----------------------------------------------------------------
-  Date             Prompt tok     Gen tok    Requests
-  ----------------------------------------------------------------
-  2026-06-07          450,000    1,650,000      1,250
-  2026-06-06          420,000    1,580,000      1,190
-  ...
-======================================================================
-```
-
 ## Requirements
 
 - Python 3.10+
