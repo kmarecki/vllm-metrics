@@ -210,3 +210,63 @@ def test_gen_throughput_empty_state(db_conn, monkeypatch):
     df = load_latest_snapshots()
     assert len(df) == 1
     assert df.iloc[0]["generation_tokens_total"] == 0
+
+
+# ── T011: Global totals aggregation (US1, FR-002) ──────────────────────
+
+def test_global_totals_aggregation(db_conn, monkeypatch):
+    """Global totals sum correctly across multiple dates."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+
+    # Seed 3 days of data
+    seed_daily_stats(db_conn, sid, mid, "2026-06-01",
+                     prompt=1000, gen=2000, requests=10)
+    seed_daily_stats(db_conn, sid, mid, "2026-06-02",
+                     prompt=2000, gen=4000, requests=20)
+    seed_daily_stats(db_conn, sid, mid, "2026-06-03",
+                     prompt=3000, gen=6000, requests=30)
+
+    df = load_daily_summary()
+
+    assert df["prompt_tokens"].sum() == 6000
+    assert df["generation_tokens"].sum() == 12000
+    assert df["completed_requests"].sum() == 60
+
+
+# ── T012: Daily token volume aggregation (US1, FR-003) ─────────────────
+
+def test_daily_token_volume(db_conn, monkeypatch):
+    """Daily token volume groups correctly by date."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid_a = seed_model(db_conn, sid, "model-a")
+    mid_b = seed_model(db_conn, sid, "model-b")
+
+    # Two models on same date
+    seed_daily_stats(db_conn, sid, mid_a, "2026-06-01",
+                     prompt=1000, gen=2000)
+    seed_daily_stats(db_conn, sid, mid_b, "2026-06-01",
+                     prompt=3000, gen=4000)
+    seed_daily_stats(db_conn, sid, mid_a, "2026-06-02",
+                     prompt=5000, gen=6000)
+
+    df = load_daily_summary()
+
+    # load_daily_summary returns individual rows, not grouped by date yet
+    # The grouping is done in the dashboard's _build_tab_token_trends
+    # Verify raw data is correct
+    assert len(df) == 3
+    assert df["date"].nunique() == 2
+    # Verify both models on 2026-06-01 are present
+    jun1 = df[df["date"] == "2026-06-01"]
+    assert len(jun1) == 2
