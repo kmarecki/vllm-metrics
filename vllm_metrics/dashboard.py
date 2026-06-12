@@ -321,16 +321,16 @@ def _compute_gen_rates(raw: pd.DataFrame) -> list[dict]:
     rate_rows = []
     for (sv, mdl), grp in raw_ts.groupby(["server", "model"]):
         grp = grp.sort_values("ts")
+        ts_series = grp["ts"]
         vals = grp["generation_tokens_total"].values
-        times = grp["ts"].values
         for j in range(1, len(vals)):
-            dt = (times[j] - times[j - 1]).total_seconds()
+            dt = (ts_series.iloc[j] - ts_series.iloc[j - 1]).total_seconds()
             gd = vals[j] - vals[j - 1]
             if dt > 0 and gd > 0:
                 rate = gd / dt
                 if 0.1 <= rate <= 10000:
                     rate_rows.append({
-                        "ts": times[j],
+                        "ts": ts_series.iloc[j],
                         "server": sv,
                         "model": mdl,
                         "gen_tok_s": rate,
