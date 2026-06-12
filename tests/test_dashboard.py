@@ -368,3 +368,49 @@ def test_server_filter_scoping(db_conn, monkeypatch):
     assert df["server"].nunique() == 2
     spark1_data = df[df["server"] == "spark1"]
     assert spark1_data["prompt_tokens"].sum() == 1000
+
+
+# ── T026: Empty database edge case ─────────────────────────────────────
+
+def test_empty_database_graceful(db_conn, monkeypatch):
+    """Empty DB returns empty DataFrames without crashing."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_servers, load_daily_summary, load_latest_snapshots
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    servers = load_servers()
+    assert servers.empty
+
+    daily = load_daily_summary()
+    assert daily.empty
+
+    raw = load_latest_snapshots()
+    assert raw.empty
+
+
+# ── T027: Single-data-point edge case ──────────────────────────────────
+
+def test_single_data_point(db_conn, monkeypatch):
+    """Single snapshot doesn't crash gen rate computation."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_latest_snapshots, _compute_gen_rates
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    now = time.time()
+
+    db_conn.execute("""
+        INSERT INTO raw_snapshots
+            (server_id, model_id, timestamp, timestring,
+             num_requests_running, generation_tokens_total)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (sid, mid, now, "2026-06-12T00:00:00", 2, 6000))
+    db_conn.commit()
+
+    raw = load_latest_snapshots()
+    rates = _compute_gen_rates(raw)
+    # Single snapshot -> no consecutive pair -> no rates
+    assert rates == []

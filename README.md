@@ -268,5 +268,24 @@ All metrics come from vLLM's Prometheus `/metrics` endpoint.
     ├── scraper.py           Prometheus parser + delta computation
     ├── db.py                SQLite schema + rollup queries
     ├── report.py            Report formatter
+    ├── dashboard.py         Streamlit dashboard (optional)
     └── daemon.py            Main loop
 ```
+
+## Dashboard (Optional)
+
+A Streamlit dashboard is available with NVIDIA black/green theme for visualizing captured metrics.
+
+```bash
+# Install optional dependencies
+pip install streamlit plotly
+
+# Launch the dashboard
+./vllm-metrics dashboard
+```
+
+The dashboard opens in your browser with four tabs:
+- **Token Trends** — token volume over time, generation throughput
+- **Latency & Concurrency** — TTFT, ITL, KV cache, concurrent requests
+- **Per-Model Breakdown** — token distribution by model
+- **Server Stats** — live server status, recent snapshots
