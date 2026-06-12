@@ -12,7 +12,7 @@
 
 ---
 
-## Phase 3a: Setup — Test Infrastructure
+## Phase 4a: Setup — Test Infrastructure
 
 **Purpose**: Create the test framework so all subsequent phases use TDD.
 
@@ -24,7 +24,7 @@
 
 ---
 
-## Phase 3b: Core Infrastructure
+## Phase 4b: Core Infrastructure
 
 **Purpose**: Dashboard file, CLI subcommand, and data layer that all tabs depend on.
 
@@ -40,12 +40,13 @@
 - [ ] T008 [P] [Setup] Create `vllm_metrics/dashboard.py` with DB connection (get_conn cached), config loader, formatting helpers (fmt_number, fmt_ms, fmt_s, fmt_pct, fmt_decimal), NVIDIA CSS injection — vllm_metrics/dashboard.py
 - [ ] T009 [P] [Setup] Implement data layer: `load_servers()`, `load_daily_summary()`, `load_latest_snapshots()` — vllm_metrics/dashboard.py
 - [ ] T010 [P] [Setup] Wire `vllm-metrics dashboard` subcommand in CLI — add `dashboard` parser entry, `cmd_dashboard` function that spawns `streamlit run` — vllm-metrics
+- [ ] T010b [P] [Setup] Add ImportError handling in cmd_dashboard — if streamlit not installed, print clear message with `pip install streamlit plotly` hint — vllm-metrics
 
 **Checkpoint**: `vllm-metrics dashboard` launches, DB connection works, all query functions tested.
 
 ---
 
-## Phase 3c: Token Trends Tab (User Story 1 — US1, FR-001/002/003/004)
+## Phase 4c: Token Trends Tab (User Story 1 — US1, FR-001/002/003/004)
 
 **Purpose**: Global metric cards and token volume/throughput charts — the primary dashboard view.
 
@@ -64,7 +65,7 @@
 
 ---
 
-## Phase 3d: Latency & Concurrency Tab (User Story 2 — US2, FR-005/006/007)
+## Phase 4d: Latency & Concurrency Tab (User Story 2 — US2, FR-005/006/007)
 
 **Purpose**: Performance monitoring — concurrency, KV cache, and latency charts.
 
@@ -83,7 +84,7 @@
 
 ---
 
-## Phase 3e: Per-Model & Server Stats Tabs (User Story 3 — US3, FR-008/009/012)
+## Phase 4e: Per-Model & Server Stats Tabs (User Story 3 — US3, FR-008/009/012)
 
 **Purpose**: Per-model breakdown table/chart and server-level raw data view.
 
@@ -102,7 +103,7 @@
 
 ---
 
-## Phase 3f: Polish & Validation
+## Phase 4f: Polish & Validation
 
 **Purpose**: Edge case handling, README update, and final validation.
 
@@ -124,23 +125,23 @@
 ## Summary
 
 | # | Phase | Tasks | Tests | Files Created |
-|---|-------|-------|-------|---------------|
-| 3a | Test Infrastructure | 3 | 1 | tests/conftest.py, tests/test_dashboard.py |
-| 3b | Core Infrastructure | 7 | 4 | vllm_metrics/dashboard.py (+ CLI edit) |
-| 3c | Token Trends | 5 | 2 | — |
-| 3d | Latency & Concurrency | 5 | 2 | — |
-| 3e | Per-Model & Server Stats | 5 | 2 | — |
-| 3f | Polish & Validation | 5 | 2 | README.md |
-| **Total** | | **30** | **13** | **3 new, 2 modified** |
+|--|-------|-------|-------|---------------|
+| 4a | Test Infrastructure | 3 | 1 | tests/conftest.py, tests/test_dashboard.py |
+| 4b | Core Infrastructure | 8 | 4 | vllm_metrics/dashboard.py (+ CLI edit) |
+| 4c | Token Trends | 5 | 2 | — |
+| 4d | Latency & Concurrency | 5 | 2 | — |
+| 4e | Per-Model & Server Stats | 5 | 2 | — |
+| 4f | Polish & Validation | 5 | 2 | README.md |
+| **Total** | | **31** | **13** | **3 new, 2 modified** |
 
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
-- **3a**: No dependencies — start immediately
-- **3b**: Depends on 3a (test framework) — BLOCKS all subsequent phases
-- **3c, 3d, 3e**: All depend on 3b — can proceed in parallel after 3b completes
-- **3f**: Depends on 3c, 3d, 3e — final phase
+- **4a**: No dependencies — start immediately
+- **4b**: Depends on 4a (test framework) — BLOCKS all subsequent phases
+- **4c, 4d, 4e**: All depend on 4b — can proceed in parallel after 4b completes
+- **4f**: Depends on 4c, 4d, 4e — final phase
 
 ### Parallel Opportunities
 - All [P] tasks within a phase can run in parallel
-- 3c, 3d, 3e can proceed in parallel after 3b completes
+- 4c, 4d, 4e can proceed in parallel after 4b completes
