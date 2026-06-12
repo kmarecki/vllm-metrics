@@ -136,6 +136,10 @@
 
 ## Dependencies & Execution Order
 
+### Bugfix Tasks
+
+- [ ] BF-001 [BUG-001] Add `check_same_thread=False` to sqlite3.connect() in vllm_metrics/db.py — vllm_metrics/db.py
+
 ### Phase Dependencies
 - **4a**: No dependencies — start immediately
 - **4b**: Depends on 4a (test framework) — BLOCKS all subsequent phases
