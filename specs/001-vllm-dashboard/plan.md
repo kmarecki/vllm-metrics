@@ -92,3 +92,13 @@ vllm-metrics             # MODIFIED — add 'dashboard' subcommand
 ## Complexity Tracking
 
 No constitution violations. Architecture is a single new file reading existing tables.
+
+### BUG-001 Fix: SQLite thread safety in Streamlit dashboard
+
+**Root cause**: `sqlite3.connect()` creates connections bound to the calling thread. Streamlit's `@st.cache_resource` caches the connection on first call but reruns the dashboard script in a new thread on each interaction. The cached connection is used from the wrong thread.
+
+**Fix**: Add `check_same_thread=False` to `sqlite3.connect()` in `vllm_metrics/db.py`'s `connect()` function. This tells SQLite to allow the connection to be used from any thread.
+
+**Constitution check**: The dashboard is an optional subcommand. Core CLI commands (daemon, scrape, report) run single-threaded and are unaffected. Streamlit's rerun model inherently crosses threads — this is safe and expected usage.
+
+**Additive note**: Single-line change. No existing plan sections modified.
