@@ -139,6 +139,30 @@ def cmd_models(args):
         print(f"{row['model_name']:<60} {row['server_name']:<20} {row['first_seen']:<20} {row['last_seen']:<20}")
 
 
+def cmd_dashboard(args):
+    """Launch Streamlit dashboard (T010)."""
+    try:
+        import streamlit  # noqa: F401 — verify it's installed
+    except ImportError:
+        print(
+            "Streamlit is required for the dashboard.\n"
+            "Install it with:  pip install streamlit plotly\n"
+            "Then run:  vllm-metrics dashboard",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    import subprocess
+    dashboard_path = os.path.join(
+        os.path.dirname(__file__), "vllm_metrics", "dashboard.py"
+    )
+    subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", dashboard_path,
+         "--server.headless", "true"],
+        check=True,
+    )
+
+
 def main():
     # Default config paths
     default_configs = [
@@ -178,6 +202,9 @@ def main():
     # prune
     sub.add_parser('prune', help='Roll up raw snapshots into daily_stats + prune old data')
 
+    # dashboard
+    sub.add_parser('dashboard', help='Launch Streamlit dashboard (NVIDIA theme)')
+
     args = parser.parse_args()
 
     if args.command == 'daemon':
@@ -192,6 +219,8 @@ def main():
         cmd_models(args)
     elif args.command == 'prune':
         cmd_prune(args)
+    elif args.command == 'dashboard':
+        cmd_dashboard(args)
 
 
 if __name__ == '__main__':
