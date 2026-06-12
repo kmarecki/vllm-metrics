@@ -24,14 +24,33 @@
 
 ---
 
+### BUG-002: Date range filter only shows last 2 days regardless of selection
+
+- **Severity**: major
+- **Area**: vllm_metrics/dashboard.py — `_build_sidebar` / date range filter logic
+- **Description**: Selecting "7 days", "30 days", "90 days", or "All" in the date range selector all produce the same result — only the last 2 days of data are shown in the dashboard.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Leave date range at default "7 days"
+  3. Observe that charts show only 2 days of data
+  4. Change to "All" — still only 2 days shown
+- **Actual Result**: Only 2 days of data visible regardless of range selection
+- **Expected Result**: Each range selection should show the corresponding number of days (7, 30, 90, or all available data)
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: open
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
 |--------|----------|------|--------|---------------------|
-| BUG-001 | critical | DB connection | open | no |
+| BUG-001 | critical | DB connection | resolved | no |
+| BUG-002 | major | date range filter | open | no |
 
-**Total Bugs**: 1
+**Total Bugs**: 2
 **Open**: 1
 **In Progress**: 0
-**Resolved**: 0
+**Resolved**: 1
 **Verified**: 0

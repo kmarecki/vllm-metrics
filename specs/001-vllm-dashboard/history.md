@@ -35,3 +35,9 @@
 - **Artifacts**: specs/001-vllm-dashboard/bugs.md
 - **Commit**: N/A
 - **Notes**: Logged BUG-001 (critical) — SQLite thread safety, check_same_thread=False
+
+## 2026-06-12T12:00:00Z | Phase 5 → Bug Log Update
+- **Skill**: spec-kit-test
+- **Artifacts**: specs/001-vllm-dashboard/bugs.md (BUG-002 appended)
+- **Commit**: N/A
+- **Notes**: Logged BUG-002 (major) — date range filter only shows last 2 days regardless of selection
