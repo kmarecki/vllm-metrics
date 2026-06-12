@@ -13,7 +13,7 @@ def test_fmt_number(monkeypatch):
     pytest.importorskip("vllm_metrics.dashboard")
     from vllm_metrics.dashboard import fmt_number
 
-    assert fmt_number(None) == "—"
+    assert fmt_number(None) == "\u2014"
     assert fmt_number(0) == "0"
     assert fmt_number(100) == "100"
     assert fmt_number(1_500) == "1.5K"
@@ -28,8 +28,8 @@ def test_fmt_ms(monkeypatch):
     pytest.importorskip("vllm_metrics.dashboard")
     from vllm_metrics.dashboard import fmt_ms
 
-    assert fmt_ms(None) == "—"
-    assert fmt_ms(0) == "—"
+    assert fmt_ms(None) == "\u2014"
+    assert fmt_ms(0) == "\u2014"
     assert fmt_ms(0.1) == "100.0ms"
     assert fmt_ms(1.0) == "1000.0ms"
 
@@ -39,8 +39,8 @@ def test_fmt_s(monkeypatch):
     pytest.importorskip("vllm_metrics.dashboard")
     from vllm_metrics.dashboard import fmt_s
 
-    assert fmt_s(None) == "—"
-    assert fmt_s(0) == "—"
+    assert fmt_s(None) == "\u2014"
+    assert fmt_s(0) == "\u2014"
     assert fmt_s(0.5) == "0.5s"
     assert fmt_s(30) == "30.0s"
     assert fmt_s(90) == "1.5m"
@@ -52,7 +52,7 @@ def test_fmt_pct(monkeypatch):
     pytest.importorskip("vllm_metrics.dashboard")
     from vllm_metrics.dashboard import fmt_pct
 
-    assert fmt_pct(None) == "—"
+    assert fmt_pct(None) == "\u2014"
     assert fmt_pct(0.0) == "0.0%"
     assert fmt_pct(0.5) == "50.0%"
     assert fmt_pct(1.0) == "100.0%"
@@ -270,3 +270,101 @@ def test_daily_token_volume(db_conn, monkeypatch):
     # Verify both models on 2026-06-01 are present
     jun1 = df[df["date"] == "2026-06-01"]
     assert len(jun1) == 2
+
+
+# ── T016: Concurrency aggregation (US2, FR-005) ────────────────────────
+
+def test_concurrency_aggregation(db_conn, monkeypatch):
+    """Concurrency metrics avg_running and max_running load correctly."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    seed_daily_stats(db_conn, sid, mid, "2026-06-01",
+                     avg_running=2.5, max_running=8.0, avg_waiting=1.0)
+    seed_daily_stats(db_conn, sid, mid, "2026-06-02",
+                     avg_running=3.0, max_running=10.0, avg_waiting=2.0)
+
+    df = load_daily_summary()
+
+    assert df["avg_running"].mean() == pytest.approx(2.75)
+    assert df["max_running"].max() == 10.0
+    assert df["avg_waiting"].mean() == pytest.approx(1.5)
+
+
+# ── T017: Latency metrics (US2, FR-007) ────────────────────────────────
+
+def test_latency_metrics(db_conn, monkeypatch):
+    """Latency columns ttft_ms, itl_ms, e2e_s load correctly."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    seed_daily_stats(db_conn, sid, mid, "2026-06-01",
+                     ttft_ms=100.0, itl_ms=20.0, e2e_s=5.0)
+
+    df = load_daily_summary()
+
+    assert df["avg_ttft_ms"].iloc[0] == 100.0
+    assert df["avg_itl_ms"].iloc[0] == 20.0
+    assert df["avg_e2e_s"].iloc[0] == 5.0
+
+
+# ── T021: Per-model breakdown (US3, FR-008) ────────────────────────────
+
+def test_per_model_breakdown(db_conn, monkeypatch):
+    """Per-model query returns separate rows for each model."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid_a = seed_model(db_conn, sid, "deepseek-v4")
+    mid_b = seed_model(db_conn, sid, "gemma-4")
+
+    seed_daily_stats(db_conn, sid, mid_a, "2026-06-01",
+                     prompt=5000, gen=10000, requests=50)
+    seed_daily_stats(db_conn, sid, mid_b, "2026-06-01",
+                     prompt=3000, gen=6000, requests=30)
+
+    df = load_daily_summary()
+
+    assert len(df) == 2
+    models = df["model"].tolist()
+    assert "deepseek-v4" in models
+    assert "gemma-4" in models
+
+
+# ── T022: Server filter scoping (US3, FR-009) ──────────────────────────
+
+def test_server_filter_scoping(db_conn, monkeypatch):
+    """Server filter correctly scopes queries to one server."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_daily_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid1 = seed_server(db_conn, "spark1")
+    sid2 = seed_server(db_conn, "atom1")
+    mid1 = seed_model(db_conn, sid1)
+    mid2 = seed_model(db_conn, sid2)
+
+    seed_daily_stats(db_conn, sid1, mid1, "2026-06-01",
+                     prompt=1000, gen=2000)
+    seed_daily_stats(db_conn, sid2, mid2, "2026-06-01",
+                     prompt=500, gen=1000)
+
+    df = load_daily_summary()
+
+    # Filtering is done in Python (dashboard's run() function),
+    # but we verify the query returns labeled data correctly
+    assert df["server"].nunique() == 2
+    spark1_data = df[df["server"] == "spark1"]
+    assert spark1_data["prompt_tokens"].sum() == 1000
