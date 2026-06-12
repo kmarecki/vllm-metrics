@@ -1,0 +1,94 @@
+# Implementation Plan: vLLM Dashboard
+
+**Branch**: feat/001-vllm-dashboard | **Date**: 2026-06-12 | **Spec**: specs/001-vllm-dashboard/spec.md
+
+**Input**: Feature specification from specs/001-vllm-dashboard/spec.md — Streamlit dashboard in NVIDIA black/green color scheme for presenting captured vLLM metrics.
+
+## Summary
+
+Add a `vllm-metrics dashboard` subcommand that launches a Streamlit web app reading from the existing SQLite metrics database. The dashboard has four tabs: Token Trends, Latency & Concurrency, Per-Model Breakdown, and Server Stats — all styled with NVIDIA's dark background (#0d1117) and green accent (#76b900). Optional dependency: streamlit + plotly.
+
+## Technical Context
+
+- **Language/Version:** Python 3.11+
+- **Primary Dependencies:** streamlit, plotly (optional — dashboard only)
+- **Storage:** SQLite (~/.vllm-metrics.db), read-only queries on daily_stats + raw_snapshots + servers + models
+- **Testing:** Manual validation against report command output (no automated UI tests for v1)
+- **Target Platform:** Linux (Ubuntu aarch64 primary), localhost access only
+- **Project Type:** CLI tool with optional Streamlit dashboard subcommand
+- **Performance Goals:** Dashboard loads in <5s with 30 days of daily_stats data
+- **Constraints:** No authentication, no multi-user, local DB only
+- **Scale/Scope:** 1–5 servers, 1–20 models, up to years of daily_stats
+
+## Constitution Check
+
+**GATE 1 — Minimal Dependencies:** PASS. Core CLI (scrape/daemon/report) unchanged. Streamlit only imported when the `dashboard` subcommand is invoked. `vllm-metrics --help` still works without streamlit.
+
+**GATE 2 — Meaningful Statistics:** PASS. Dashboard reuses the same SQL queries and aggregation logic as the report command. Throughput computed from consecutive gen-producing snapshots, not time-window fallback.
+
+**GATE 3 — Transparency:** PASS. Data source is the same SQLite DB. Calculations documented in data-model.md.
+
+## Project Structure
+
+### Artifacts (this feature)
+
+```
+specs/001-vllm-dashboard/
+├── spec.md              # Phase 1 — requirements
+├── plan.md              # This file — implementation plan
+├── research.md          # Technology decision
+├── data-model.md        # SQL queries and data flow
+└── quickstart.md        # Validation scenarios
+
+vllm_metrics/
+├── dashboard.py         # NEW — Streamlit app (all tabs, styling, queries)
+├── daemon.py            # UNCHANGED
+├── db.py                # UNCHANGED
+├── report.py            # UNCHANGED
+├── scraper.py           # UNCHANGED
+└── __init__.py          # UNCHANGED
+
+vllm-metrics             # MODIFIED — add 'dashboard' subcommand
+```
+
+### Files Changed
+
+| File | Action | Scope |
+|------|--------|-------|
+| `vllm_metrics/dashboard.py` | **CREATE** | ~500 lines: Streamlit app with 4 tabs, NVIDIA theme, all SQL queries |
+| `vllm-metrics` (CLI) | **MODIFY** | +5 lines: add `dashboard` subparser + `cmd_dashboard` function |
+
+## Implementation Phases
+
+### Phase 4a — Core infrastructure
+- Create `vllm_metrics/dashboard.py` with DB connection, config loading, helper functions (formatting, NVIDIA CSS)
+- Wire `vllm-metrics dashboard` subcommand into the CLI entry point
+
+### Phase 4b — Token Trends tab
+- Metric cards (total tokens, prompt, gen, requests, cache hit rate)
+- Token volume bar chart (daily aggregation)
+- Generation throughput line chart (from raw_snapshots)
+
+### Phase 4c — Latency & Concurrency tab
+- Concurrency charts (avg running, avg waiting, peak running)
+- Latency charts (TTFT, ITL, E2E)
+- KV cache usage area chart
+
+### Phase 4d — Per-Model & Server Stats tabs
+- Per-model summary table + bar chart
+- Server status sidebar with online/offline indicators
+- Raw snapshots table (last 50)
+- Server filter dropdown
+
+## Edge Cases Covered
+
+- **Empty DB**: Informational message, no crash
+- **Single data point**: Line chart renders a single point marker
+- **No throughput data**: Empty state in gen throughput chart
+- **Missing config.yaml**: Graceful fallback to default path
+- **Large datasets**: Streamlit caches DB connection; daily aggregation means at most 365 rows per chart
+- **Streamlit not installed**: ImportError at subcommand dispatch — clear error message suggesting pip install
+
+## Complexity Tracking
+
+No constitution violations. Architecture is a single new file reading existing tables.
