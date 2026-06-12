@@ -20,7 +20,7 @@
 - **Expected Result**: Dashboard should work across Streamlit's thread-switching reruns
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: Plan section: BUG-001 Fix: SQLite thread safety in Streamlit dashboard
-- **Status**: open
+- **Status**: resolved
 
 ---
 
