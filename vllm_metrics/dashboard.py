@@ -241,9 +241,17 @@ def load_raw_summary(since: str | None = None, until: str | None = None,
         conditions.append("DATE(r.timestring) <= ?")
         params.append(until)
     where = "WHERE " + " AND ".join(conditions) if conditions else ""
+
+    # Timezone offset for shifting UTC dates → local dates in GROUP BY
+    if tz:
+        offset_s = int(datetime.now(tz).utcoffset().total_seconds())
+        date_expr = f"DATE(r.timestring, '+{offset_s} seconds')"
+    else:
+        date_expr = "DATE(r.timestring)"
+
     qry = f"""
         SELECT
-            DATE(r.timestring) AS date,
+            {date_expr} AS date,
             s.name AS server,
             m.model_name AS model,
             SUM(r.prompt_tokens_total)        AS prompt_tokens,
@@ -264,7 +272,7 @@ def load_raw_summary(since: str | None = None, until: str | None = None,
         JOIN servers s ON r.server_id = s.id
         LEFT JOIN models m ON r.model_id = m.id
         {where}
-        GROUP BY DATE(r.timestring), s.name, m.model_name
+        GROUP BY {date_expr}, s.name, m.model_name
         HAVING m.model_name IS NOT NULL
         ORDER BY date, s.name, m.model_name
     """
