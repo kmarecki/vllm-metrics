@@ -1,58 +1,53 @@
-# Pre-Implement Review: 001-vllm-dashboard
+# Post-Implement Review: 001-vllm-dashboard
 
-## Findings
+## Spec Fulfillment
 
-| ID | Category | Severity | Location | Summary | Recommendation |
-|----|----------|----------|----------|---------|----------------|
-| F1 | Naming | MEDIUM | tasks.md (all phases) vs plan.md (Phase 4a-4d) | Tasks uses "Phase 3a-3f" but these are **implementation** phases — should be "Phase 4a-4f" per workflow (Phase 3 = Tasks, Phase 4 = Implement) | Rename task phases from 3a-3f to 4a-4f |
-| F2 | Coverage Gap | MEDIUM | tasks.md — missing task | Plan says "ImportError at subcommand dispatch — clear error message suggesting pip install" but no task covers the graceful handling when streamlit is not installed | Add task to handle ImportError in cmd_dashboard and show pip install hint |
-| F3 | Coverage Gap | LOW | tasks.md — single data point | T027 tests single-data-point rendering but no implementation task explicitly handles it (plotly renders single points naturally, so low risk) | Either add impl note or verify in T028 |
-| F4 | Coverage Gap | LOW | tasks.md — large datasets | Plan says "at most 365 rows per chart" relying on daily aggregation, but no task explicitly validates performance with large datasets | Add a note or low-effort task for large-DB smoke test |
-| F5 | Terminology | LOW | plan.md vs tasks.md phase naming | Plan calls phases "Phase 4a-4d" but tasks calls them "Phase 3a-3f" — internally inconsistent | Align on "Phase 4" prefix since Phase 3 is already the tasks phase itself |
-
-## Coverage Summary
-
-| Requirement | Has Tasks? | Task IDs |
-|-------------|-----------|----------|
-| FR-001 (dashboard command) | ✅ | T010 |
-| FR-002 (metric cards) | ✅ | T014 |
-| FR-003 (token volume over time) | ✅ | T015 |
-| FR-004 (gen throughput) | ✅ | T007, T015 |
-| FR-005 (concurrent running/waiting) | ✅ | T016, T018 |
-| FR-006 (KV cache usage) | ✅ | T019 |
-| FR-007 (latency metrics) | ✅ | T017, T020 |
-| FR-008 (per-model breakdown) | ✅ | T021, T023 |
-| FR-009 (server filter) | ✅ | T022, T024 |
-| FR-010 (server status sidebar) | ✅ | T013 |
-| FR-011 (NVIDIA color scheme) | ✅ | T008 |
-| FR-012 (raw data table) | ✅ | T025 |
-| FR-013 (empty DB handling) | ✅ | T026, T028 |
-| FR-014 (vllm-metrics dashboard cmd) | ✅ | T010 |
-
-**Coverage: 14/14 FRs (100%)**
+| FR-ID | Status | Notes |
+|-------|--------|-------|
+| FR-001 | ✅ Fulfilled | `vllm-metrics dashboard` subcommand with ImportError handling |
+| FR-002 | ✅ Fulfilled | Metric cards: total tokens, prompt, gen, requests, cache hit rate |
+| FR-003 | ✅ Fulfilled | Token volume bar chart per day (prompt + gen + cached) |
+| FR-004 | ✅ Fulfilled | Gen throughput line chart from raw_snapshots |
+| FR-005 | ✅ Fulfilled | Avg running/waiting line chart, peak running bar chart |
+| FR-006 | ✅ Fulfilled | KV cache usage area chart |
+| FR-007 | ✅ Fulfilled | TTFT, ITL/TPOT, E2E time-series line charts |
+| FR-008 | ✅ Fulfilled | Per-model summary table + token distribution bar chart |
+| FR-009 | ✅ Fulfilled | Server filter dropdown in sidebar, scopes all data |
+| FR-010 | ✅ Fulfilled | Server status sidebar with green/red online/offline dots |
+| FR-011 | ✅ Fulfilled | NVIDIA dark background (#0d1117) + green (#76b900) CSS + plotly theme |
+| FR-012 | ✅ Fulfilled | Raw snapshots table (last 50) in Server Stats tab |
+| FR-013 | ✅ Fulfilled | Empty DB → info message; missing config → graceful config search |
+| FR-014 | ✅ Fulfilled | `vllm-metrics dashboard` launches streamlit run |
 
 ## Constitution Alignment
 
-- **Minimal Dependencies** ✅ — streamlit only imported on `dashboard` subcommand
-- **Meaningful Statistics** ✅ — reuses same queries as report command
-- **Transparency** ✅ — data-model.md documents all queries
+- **Data Persistence** ✅ — dashboard is read-only, no data modification
+- **Meaningful Statistics** ✅ — raw_snapshots fallback uses time-weighted averages, gen throughput from consecutive snapshots
+- **Minimal Dependencies** ✅ — streamlit/plotly optional, import checked in cmd_dashboard
+- **Transparency** ✅ — all queries documented in data-model.md
+
+## Code Quality Findings
+
+| ID | Category | Severity | File | Finding | Suggestion |
+|----|----------|----------|------|---------|------------|
+| Q1 | Duplication | LOW | dashboard.py (load_raw_summary) | SQL query logic mirrors report.py's _run_raw_summary — some duplication | Could extract shared query to db.py, but low priority for v1 |
+| Q2 | Style | LOW | dashboard.py | `since` computing import inside `_build_sidebar` | Move `from datetime import timedelta` to top of file |
+
+## Test Quality
+
+- 18 tests, all passing
+- Formatting helpers fully covered (5 tests)
+- Data layer queries covered (load_servers, load_daily_summary, load_latest_snapshots)
+- Edge cases covered (empty DB, single data point, gen throughput empty)
+- Missing: no test for `load_raw_summary` (the new fallback function)
 
 ## Metrics
 
-- Total Requirements: 14
-- Total Tasks: 30
-- Coverage: 100%
-- Ambiguity Count: 0
-- Critical Issues: 0
-- High Issues: 0
-- Medium Issues: 2 (F1, F2)
-- Low Issues: 2 (F3, F4, F5)
+- Requirements fulfilled: 14/14 (100%)
+- Code quality issues: 2 LOW
+- Constitution violations: 0
+- Test coverage: Satisfactory — data layer + edge cases covered
 
 ## Recommendation
 
-**Proceed** — no critical or high issues. Two medium issues worth fixing before implementation:
-
-1. **F1** (phase numbering) — quick rename in tasks.md
-2. **F2** (missing streamlit import error task) — worth adding since it's a real UX gap
-
-Want me to fix these before moving to implement?
+**Proceed to close** — no critical or high issues. Two minor suggestions (extract import, add raw_summary test) if desired.
