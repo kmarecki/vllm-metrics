@@ -184,10 +184,37 @@ def load_daily_summary(since: str | None = None, until: str | None = None) -> pd
     return pd.DataFrame([dict(r) for r in rows])
 
 
-def load_latest_snapshots(limit: int = 500) -> pd.DataFrame:
-    """Load the most recent raw_snapshots rows."""
+def load_latest_snapshots(limit: int = 500, since: str | None = None,
+                          until: str | None = None, tz=None) -> pd.DataFrame:
+    """Load recent raw_snapshots rows, optionally filtered by date range."""
     conn = get_conn()
-    rows = conn.execute(f"""
+    conditions = []
+    params = []
+
+    if tz:
+        from datetime import timedelta as _td
+        def _ld_to_uts(d, eod=False):
+            p = d.split("-")
+            dt = datetime(int(p[0]), int(p[1]), int(p[2]), tzinfo=tz)
+            if eod:
+                dt += _td(days=1)
+            return int(dt.astimezone(timezone.utc).timestamp())
+        if since:
+            conditions.append("r.timestamp >= ?")
+            params.append(_ld_to_uts(since))
+        if until:
+            conditions.append("r.timestamp < ?")
+            params.append(_ld_to_uts(until, eod=True))
+    else:
+        if since:
+            conditions.append("DATE(r.timestring) >= ?")
+            params.append(since)
+        if until:
+            conditions.append("DATE(r.timestring) <= ?")
+            params.append(until)
+
+    where = "WHERE " + " AND ".join(conditions) if conditions else ""
+    qry = f"""
         SELECT
             r.timestamp,
             datetime(r.timestamp, 'unixepoch') AS ts_str,
@@ -202,9 +229,12 @@ def load_latest_snapshots(limit: int = 500) -> pd.DataFrame:
         FROM raw_snapshots r
         JOIN servers s ON r.server_id = s.id
         LEFT JOIN models m ON r.model_id = m.id
+        {where}
         ORDER BY r.timestamp DESC
         LIMIT ?
-    """, (limit,)).fetchall()
+    """
+    params.append(limit)
+    rows = conn.execute(qry, params).fetchall()
     return pd.DataFrame([dict(r) for r in rows])
 
 
@@ -415,10 +445,7 @@ def _compute_gen_rates(raw: pd.DataFrame, tz=None) -> list[dict]:
     if raw.empty or "timestamp" not in raw.columns:
         return []
     raw_ts = raw.copy()
-    if tz and "ts_local" in raw_ts.columns:
-        raw_ts["ts"] = raw_ts["ts_local"]
-    else:
-        raw_ts["ts"] = pd.to_datetime(raw_ts["timestamp"], unit="s")
+    raw_ts["ts"] = pd.to_datetime(raw_ts["timestamp"], unit="s")
     raw_ts = raw_ts.sort_values("ts")
 
     rate_rows = []
@@ -591,7 +618,8 @@ def run():
     daily = load_raw_summary(since=since, until=until, tz=tz)
     if daily.empty:
         daily = load_daily_summary(since=since, until=until)
-    raw = load_latest_snapshots()
+    raw = load_latest_snapshots(since=since, until=until, tz=tz,
+                                 limit=5000 if (since or until) else 500)
 
     # Convert timestamps to local timezone
     if not raw.empty and tz:
