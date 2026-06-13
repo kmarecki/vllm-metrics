@@ -54,7 +54,7 @@
 - **Expected Result**: No deprecation warnings. Use `width='stretch'` instead.
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: 
-- **Status**: open
+- **Status**: resolved
 
 ---
 
@@ -64,10 +64,10 @@
 |--------|----------|------|--------|---------------------|
 | BUG-001 | critical | DB connection | resolved | no |
 | BUG-002 | major | date range filter | resolved | no |
-| BUG-003 | minor | use_container_width deprecation | open | no |
+| BUG-003 | minor | use_container_width deprecation | resolved | no |
 
 **Total Bugs**: 3
-**Open**: 1
+**Open**: 0
 **In Progress**: 0
-**Resolved**: 2
+**Resolved**: 3
 **Verified**: 0

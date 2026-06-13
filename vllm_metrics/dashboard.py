@@ -332,7 +332,7 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame):
     ))
     fig.update_layout(barmode="group", title="Daily Token Volume",
                       **plotly_theme())
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # Generation throughput
     st.subheader("Generation Throughput")
@@ -348,7 +348,7 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame):
         )
         fig.update_traces(line_color=GREEN)
         fig.update_layout(**plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info("No generation throughput data available for the selected period.")
 
@@ -404,14 +404,14 @@ def _build_tab_latency_concurrency(daily: pd.DataFrame):
             marker=dict(size=4, color="#f0883e"),
         ))
         fig.update_layout(title="Average Concurrent Requests", **plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         daily_peak = daily.groupby("date", as_index=False)["max_running"].max()
         fig = px.bar(daily_peak, x="date", y="max_running",
                      title="Peak Concurrent Requests")
         fig.update_traces(marker_color=GREEN_LIGHT)
         fig.update_layout(**plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with col_b:
         st.subheader("KV Cache Usage")
@@ -421,7 +421,7 @@ def _build_tab_latency_concurrency(daily: pd.DataFrame):
         fig.update_traces(line_color=GREEN,
                           fillcolor=f"rgba(118, 185, 0, 0.2)")
         fig.update_layout(**plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         st.subheader("Latency Metrics")
         lat = daily[["date", "avg_ttft_ms", "avg_itl_ms", "avg_e2e_s"]].copy()
@@ -443,7 +443,7 @@ def _build_tab_latency_concurrency(daily: pd.DataFrame):
             line=dict(color="#58a6ff", width=2),
         ))
         fig.update_layout(title="Latency Over Time", **plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
 
 def _build_tab_per_model(daily: pd.DataFrame):
@@ -462,7 +462,7 @@ def _build_tab_per_model(daily: pd.DataFrame):
             "Server", "Model", "Prompt Tokens", "Gen Tokens",
             "Requests", "Preemptions", "Avg TTFT (ms)", "Avg ITL (ms)",
         ]
-        st.dataframe(pm, use_container_width=True, hide_index=True)
+        st.dataframe(pm, width='stretch', hide_index=True)
 
         fig = px.bar(
             pm, x="Model", y=["Prompt Tokens", "Gen Tokens"],
@@ -472,7 +472,7 @@ def _build_tab_per_model(daily: pd.DataFrame):
             },
         )
         fig.update_layout(**plotly_theme())
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info("No per-model data available.")
 
@@ -493,7 +493,7 @@ def _build_tab_server_stats(raw: pd.DataFrame):
             "num_requests_waiting": "Waiting",
             "kv_cache_usage_perc": "KV Cache %",
         })
-    st.dataframe(disp.head(50), use_container_width=True, hide_index=True)
+    st.dataframe(disp.head(50), width='stretch', hide_index=True)
 
 
 # ── Main ───────────────────────────────────────────────────────────────
