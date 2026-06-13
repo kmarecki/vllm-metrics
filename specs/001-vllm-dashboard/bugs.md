@@ -70,7 +70,7 @@
 - **Expected Result**: Calendar-aligned presets (Today, This week, This month, This year, All) + two date inputs for custom range
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: Plan section: BUG-004 Fix: Replace date range presets with calendar periods + custom range pickers
-- **Status**: open
+- **Status**: resolved
 
 ## Summary
 
@@ -79,10 +79,10 @@
 | BUG-001 | critical | DB connection | resolved | no |
 | BUG-002 | major | date range filter | resolved | no |
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
-| BUG-004 | minor | date range presets | open | no |
+| BUG-004 | minor | date range presets | resolved | no |
 
 **Total Bugs**: 4
-**Open**: 1
+**Open**: 0
 **In Progress**: 0
-**Resolved**: 3
+**Resolved**: 4
 **Verified**: 0

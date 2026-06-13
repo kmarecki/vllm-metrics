@@ -142,14 +142,18 @@ def load_servers() -> pd.DataFrame:
     )
 
 
-def load_daily_summary(since: str | None = None) -> pd.DataFrame:
+def load_daily_summary(since: str | None = None, until: str | None = None) -> pd.DataFrame:
     """Load daily_stats aggregated by date, optionally filtered."""
     conn = get_conn()
-    where = ""
+    conditions = []
     params = []
     if since:
-        where = "WHERE d.date >= ?"
+        conditions.append("d.date >= ?")
         params.append(since)
+    if until:
+        conditions.append("d.date <= ?")
+        params.append(until)
+    where = "WHERE " + " AND ".join(conditions) if conditions else ""
     qry = f"""
         SELECT
             d.date,
@@ -203,18 +207,22 @@ def load_latest_snapshots(limit: int = 500) -> pd.DataFrame:
     return pd.DataFrame([dict(r) for r in rows])
 
 
-def load_raw_summary(since: str | None = None) -> pd.DataFrame:
+def load_raw_summary(since: str | None = None, until: str | None = None) -> pd.DataFrame:
     """Load aggregated raw_snapshots by date (fallback when daily_stats is empty).
 
     Mirrors the report command's _run_raw_summary logic: sums token counters
     and averages gauges per (date, server, model).
     """
     conn = get_conn()
-    where = ""
+    conditions = []
     params = []
     if since:
-        where = "WHERE DATE(r.timestring) >= ?"
+        conditions.append("DATE(r.timestring) >= ?")
         params.append(since)
+    if until:
+        conditions.append("DATE(r.timestring) <= ?")
+        params.append(until)
+    where = "WHERE " + " AND ".join(conditions) if conditions else ""
     qry = f"""
         SELECT
             DATE(r.timestring) AS date,
@@ -248,25 +256,48 @@ def load_raw_summary(since: str | None = None) -> pd.DataFrame:
 
 # ── Dashboard UI ───────────────────────────────────────────────────────
 
-def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None]:
-    """Build sidebar controls. Returns (selected_server, range_since)."""
+def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None, str | None]:
+    """Build sidebar controls. Returns (selected_server, since, until)."""
     st.sidebar.header("Servers")
     server_options = ["All"] + sorted(servers_df["name"].tolist())
     selected_server = st.sidebar.selectbox("Filter server", server_options,
                                            label_visibility="collapsed")
 
     st.sidebar.header("Date Range")
-    range_preset = st.sidebar.selectbox(
-        "Range", ["24 hours", "7 days", "30 days", "90 days", "All"], index=0,
-        label_visibility="collapsed",
-    )
-    from datetime import timedelta
-    range_map = {"24 hours": 1, "7 days": 7, "30 days": 30, "90 days": 90, "All": 9999}
-    days = range_map[range_preset]
-    if days < 9999:
-        since = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
-    else:
-        since = None
+    today = datetime.now(timezone.utc).date()
+
+    presets = ["Today", "This week", "This month", "This year", "All", "Custom..."]
+    preset = st.sidebar.selectbox("Range", presets, index=1,
+                                  label_visibility="collapsed")
+
+    since = None
+    until = None
+
+    if preset == "Today":
+        since = today.isoformat()
+        until = today.isoformat()
+    elif preset == "This week":
+        from datetime import timedelta
+        monday = today - timedelta(days=today.weekday())
+        since = monday.isoformat()
+        until = today.isoformat()
+    elif preset == "This month":
+        since = today.replace(day=1).isoformat()
+        until = today.isoformat()
+    elif preset == "This year":
+        since = today.replace(month=1, day=1).isoformat()
+        until = today.isoformat()
+    elif preset == "Custom...":
+        col_a, col_b = st.columns(2)
+        with col_a:
+            d_since = st.date_input("From", value=today - __import__("datetime").timedelta(days=7),
+                                    label_visibility="collapsed")
+        with col_b:
+            d_until = st.date_input("To", value=today,
+                                    label_visibility="collapsed")
+        since = d_since.isoformat()
+        until = d_until.isoformat()
+    # "All" — since/until remain None (no filter)
 
     st.sidebar.header("Server Status")
     now_ts = time.time()
@@ -284,7 +315,7 @@ def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None]:
     st.sidebar.markdown("---")
     st.sidebar.caption("vLLM Metrics Collector")
 
-    return selected_server, since
+    return selected_server, since, until
 
 
 def _build_metric_cards(daily: pd.DataFrame):
@@ -521,12 +552,12 @@ def run():
         return
 
     # Sidebar
-    selected_server, since = _build_sidebar(servers)
+    selected_server, since, until = _build_sidebar(servers)
 
     # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
-    daily = load_raw_summary(since=since)
+    daily = load_raw_summary(since=since, until=until)
     if daily.empty:
-        daily = load_daily_summary(since=since)
+        daily = load_daily_summary(since=since, until=until)
     raw = load_latest_snapshots()
 
     if selected_server != "All":
