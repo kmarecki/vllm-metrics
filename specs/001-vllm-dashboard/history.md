@@ -102,3 +102,9 @@
 - **Skill**: spec-kit-refresh
 - **Artifacts**: spec.md (US6 + Yesterday), plan.md (db.py status, tests count), data-model.md (raw_snapshots Q1, tz docs)
 - **Notes**: Reconciled spec/plan/data-model with code: added calendar presets spec, timezone support, raw_snapshots query priority, db.py modification, 21 tests
+
+## 2026-06-12T12:00:00Z | Phases 5 → Q1-Q6 Quickfix
+- **Skill**: spec-kit-review / spec-kit-test
+- **Artifacts**: vllm_metrics/dashboard.py (Q1-Q5), tests/test_dashboard.py (T031)
+- **Commit**: 261cd90
+- **Notes**: Code quality fixes: replaced __import__ hack with proper imports, collapsed snap_limit redundancy, removed unused tz param from _compute_gen_rates, removed redundant outer sort, simplified cache hit rate calc, added T031 test for load_raw_summary(since) without tz
