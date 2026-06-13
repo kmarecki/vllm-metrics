@@ -514,3 +514,37 @@ def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
 
     assert len(df) == 1, "Should include only the snapshot at local June 13"
     assert abs(float(df.iloc[0]["timestamp"]) - inside_dt.timestamp()) < 1.0
+
+
+# ── T031: load_raw_summary with since only + no tz ─────────────────────
+
+def test_raw_summary_since_only_no_tz(db_conn, monkeypatch):
+    """load_raw_summary with since (no until, no tz) filters by UTC date >=."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    from datetime import datetime, timezone
+
+    # Snapshots on two different UTC dates
+    snap1 = datetime(2026, 6, 12, 12, 0, 0, tzinfo=timezone.utc)
+    snap2 = datetime(2026, 6, 13, 12, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid, mid,
+                           timestamp=snap1.timestamp(),
+                           timestring=snap1.isoformat(),
+                           running=1, gen_delta=500)
+
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=snap2.timestamp(),
+                  timestring=snap2.isoformat(),
+                  running=2, gen_delta=1000)
+
+    # Filter by UTC date — only the June 13 snapshot should match
+    df = load_raw_summary(since="2026-06-13")
+
+    assert not df.empty
+    assert df.iloc[0]["date"] == "2026-06-13"
+    assert df.iloc[0]["generation_tokens"] == 1000

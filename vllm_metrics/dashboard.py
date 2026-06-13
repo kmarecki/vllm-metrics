@@ -315,6 +315,7 @@ def load_raw_summary(since: str | None = None, until: str | None = None,
 
 def _build_sidebar(servers_df: pd.DataFrame, tz):
     """Build sidebar controls. Returns (selected_server, since, until)."""
+    from datetime import timedelta, date
     st.sidebar.header("Servers")
     server_options = ["All"] + sorted(servers_df["name"].tolist())
     selected_server = st.sidebar.selectbox("Filter server", server_options,
@@ -334,11 +335,10 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
         since = today.isoformat()
         until = today.isoformat()
     elif preset == "Yesterday":
-        yesterday = today - __import__("datetime").timedelta(days=1)
+        yesterday = today - timedelta(days=1)
         since = yesterday.isoformat()
         until = yesterday.isoformat()
     elif preset == "This week":
-        from datetime import timedelta
         monday = today - timedelta(days=today.weekday())
         since = monday.isoformat()
         until = today.isoformat()
@@ -351,7 +351,7 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
     elif preset == "Custom...":
         col_a, col_b = st.columns(2)
         with col_a:
-            d_since = st.date_input("From", value=today - __import__("datetime").timedelta(days=7),
+            d_since = st.date_input("From", value=today - timedelta(days=7),
                                     label_visibility="collapsed")
         with col_b:
             d_until = st.date_input("To", value=today,
@@ -397,8 +397,8 @@ def _build_metric_cards(daily: pd.DataFrame):
     with col4:
         st.metric("Requests", fmt_number(total_requests))
     with col5:
-        cache_pct = (total_cached / total_prompt * 100) if total_prompt > 0 else 0
-        st.metric("Cache Hit Rate", fmt_pct(cache_pct / 100))
+        cache_rate = (total_cached / total_prompt) if total_prompt > 0 else 0
+        st.metric("Cache Hit Rate", fmt_pct(cache_rate))
 
 
 def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
@@ -428,7 +428,7 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
 
     # Generation throughput
     st.subheader("Generation Throughput")
-    rate_rows = _compute_gen_rates(raw, tz)
+    rate_rows = _compute_gen_rates(raw)
     if rate_rows:
         rate_df = pd.DataFrame(rate_rows)
         # Convert x-axis timestamps from UTC to local timezone
@@ -451,13 +451,12 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
         st.info("No generation throughput data available for the selected period.")
 
 
-def _compute_gen_rates(raw: pd.DataFrame, tz=None) -> list[dict]:
+def _compute_gen_rates(raw: pd.DataFrame) -> list[dict]:
     """Compute gen throughput from consecutive gen-producing snapshots."""
     if raw.empty or "timestamp" not in raw.columns:
         return []
     raw_ts = raw.copy()
     raw_ts["ts"] = pd.to_datetime(raw_ts["timestamp"], unit="s")
-    raw_ts = raw_ts.sort_values("ts")
 
     rate_rows = []
     for (sv, mdl), grp in raw_ts.groupby(["server", "model"]):
@@ -627,12 +626,7 @@ def run():
 
     # Compute row limit for raw snapshots based on date range duration
     # Load ALL snapshots when date range is specified (needed for panning)
-    if since and until:
-        snap_limit = None
-    elif since:
-        snap_limit = None
-    else:
-        snap_limit = 500
+    snap_limit = None if (since and until or since) else 500
 
     # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
     daily = load_raw_summary(since=since, until=until, tz=tz)
