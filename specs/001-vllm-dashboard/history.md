@@ -47,3 +47,53 @@
 - **Artifacts**: specs/001-vllm-dashboard/review.md (updated)
 - **Commit**: N/A
 - **Notes**: Post-implement review — 14/14 FRs fulfilled, 2 LOW findings, no critical/high. Recommend proceed to close.
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 2 → Plan (BUG-003)
+- **Artifact**: specs/001-vllm-dashboard/plan.md — use_container_width deprecation fix section
+- **Notes**: Replaced deprecated `use_container_width=True` with `width='stretch'` (9 occurrences)
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 3 → Tasks (BF-003)
+- **Artifact**: specs/001-vllm-dashboard/tasks.md — BF-003 added
+- **Commit**: a4d04c9
+- **Notes**: Quickfix — batch commit with fix
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-003)
+- **Commit**: 3fbb54e
+- **Notes**: Replaced 9 `use_container_width=True` with `width='stretch'`
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 2 → Plan (BUG-004)
+- **Artifact**: specs/001-vllm-dashboard/plan.md — calendar periods + custom range section
+- **Notes**: Replace relative duration presets with calendar-align periods (Today, This week, This month, This year, All, Custom...)
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 3 → Tasks (BF-004)
+- **Artifact**: specs/001-vllm-dashboard/tasks.md — BF-004 added
+- **Commit**: 660c156
+- **Notes**: Calendar period presets + custom date range
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-004)
+- **Commit**: 88e5570
+- **Notes**: Replaced date range presets, added st.date_input for custom range
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (local tz)
+- **Commit**: 5bb0fdc + 249e9bb + 8981466 + 9460e44 + f799258 + 8ea4c8e
+- **Notes**: Multiple fixes: timezone detection, UTC timestamp conversion for filtering, shifted GROUP BY by tz offset, gen throughput respects date range, computed snap_limit per range, TDD tests T028-T030
+
+## 2026-06-12T12:00:00Z | Phase 5 → Bug Log (BUG-003, BUG-004, BUG-005, BUG-006)
+- **Skill**: spec-kit-test
+- **Artifacts**: specs/001-vllm-dashboard/bugs.md — BUG-003, BUG-004, BUG-005, BUG-006 appended
+- **Commits**: e677bdd, f9062c2, 4579719, cab0ea7
+- **Notes**: Logged 4 bugs during bugfix cycle
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 2 → Plan (BUG-005/BUG-006)
+- **Artifact**: specs/001-vllm-dashboard/plan.md — BUG-005 snap_limit section, BUG-006 x-axis tz section
+- **Commits**: 9460e44, 10b64b6
+- **Notes**: Plan sections for gen throughput date range scope and x-axis UTC/local tz
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 3 → Tasks (BF-005/BF-006)
+- **Artifact**: specs/001-vllm-dashboard/tasks.md — BF-005, BF-006 added
+- **Commits**: 660c156, db0e7f4
+- **Notes**: Tasks for gen throughput snap_limit and x-axis local tz
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-005/BF-006)
+- **Commits**: 8ea4c8e, a419136
+- **Notes**: Computed snap_limit from date range duration; converted gen throughput x-axis to local tz
