@@ -86,7 +86,7 @@
 - **Actual Result**: Gen throughput chart limited to last 500 snapshots regardless of date range
 - **Expected Result**: Gen throughput chart spans the full selected date range
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: Fixed: no-LIMIT when date range specified — all snapshots in range loaded, panning works across full period
+- **Plan Ref**: Fixed: no LIMIT when date range specified — all snapshots in range loaded so panning works across full period
 - **Status**: resolved
 
 ---

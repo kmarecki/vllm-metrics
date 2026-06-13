@@ -95,5 +95,5 @@
 - **Notes**: Tasks for gen throughput snap_limit and x-axis local tz
 
 ## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-005/BF-006)
-- **Commits**: 8ea4c8e, a419136
-- **Notes**: Computed snap_limit from date range duration; converted gen throughput x-axis to local tz
+- **Commits**: 8ea4c8e, a419136, ad87176
+- **Notes**: Computed snap_limit from date range duration; converted gen throughput x-axis to local tz; removed LIMIT entirely for date-range queries so all data available for panning
