@@ -112,3 +112,23 @@ No constitution violations. Architecture is a single new file reading existing t
 **Constitution check**: Meaningful Statistics principle — the raw_snapshots fallback uses the same time-weighted average logic as the report command (active-only, consecutive snapshot deltas). No idle gaps included.
 
 **Additive note**: New helper function + fallback logic in `run()`. No existing code modified — only additions.
+
+### BUG-004 Fix: Replace date range presets with calendar periods + custom range pickers
+
+**Root cause**: The `_build_sidebar()` function uses relative duration presets (24 hours, 7 days, 30 days, 90 days) mapped to `timedelta(days=N)`. No support for calendar-aligned periods or custom date inputs.
+
+**Fix**: Replace the single selectbox with:
+- A selectbox for presets: "Today", "This week", "This month", "This year", "All", "Custom..."
+- When "Custom..." is selected, show two `st.date_input()` widgets for start and end dates
+- Calendar periods compute `since`/`until` from current date:
+  - Today: `since = today`, `until = today`
+  - This week: `since = Monday of this week`, `until = today`
+  - This month: `since = 1st of this month`, `until = today`
+  - This year: `since = Jan 1 of this year`, `until = today`
+  - All: `since = None`, `until = None`
+  - Custom: user picks start and end dates
+- `load_raw_summary()` already accepts `since` — also pass `until` to query.
+
+**Constitution check**: Meaningful Statistics — calendar periods show exactly the data the user expects for each period.
+
+**Additive note**: Replace `_build_sidebar()` internals and `run()` call chain. Update `load_raw_summary()` and `load_daily_summary()` to accept optional `until` parameter.
