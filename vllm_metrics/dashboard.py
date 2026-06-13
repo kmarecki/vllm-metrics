@@ -622,15 +622,11 @@ def run():
     selected_server, since, until = _build_sidebar(servers, tz)
 
     # Compute row limit for raw snapshots based on date range duration
-    # At ~1440 snapshots/day per (server,model) at 60s interval, with
-    # up to ~4 server-model pairs: ~6000/day.  Buffer to 10000/day.
+    # Load ALL snapshots when date range is specified (needed for panning)
     if since and until:
-        _sd = datetime.strptime(since, "%Y-%m-%d")
-        _ud = datetime.strptime(until, "%Y-%m-%d")
-        days = (_ud - _sd).days + 1
-        snap_limit = min(days * 10000, 500000)
+        snap_limit = None
     elif since:
-        snap_limit = 10000  # single day
+        snap_limit = None
     else:
         snap_limit = 500
 
