@@ -14,6 +14,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from vllm_metrics import connect, get_db_path, load_config
+from vllm_metrics.report import _detect_timezone
 
 # ── NVIDIA colour palette ──────────────────────────────────────────────
 BG = "#0d1117"
@@ -256,7 +257,7 @@ def load_raw_summary(since: str | None = None, until: str | None = None) -> pd.D
 
 # ── Dashboard UI ───────────────────────────────────────────────────────
 
-def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None, str | None]:
+def _build_sidebar(servers_df: pd.DataFrame, tz):
     """Build sidebar controls. Returns (selected_server, since, until)."""
     st.sidebar.header("Servers")
     server_options = ["All"] + sorted(servers_df["name"].tolist())
@@ -264,7 +265,7 @@ def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None, str | Non
                                            label_visibility="collapsed")
 
     st.sidebar.header("Date Range")
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(tz).date()
 
     presets = ["Today", "This week", "This month", "This year", "All", "Custom..."]
     preset = st.sidebar.selectbox("Range", presets, index=1,
@@ -551,8 +552,12 @@ def run():
         )
         return
 
-    # Sidebar
-    selected_server, since, until = _build_sidebar(servers)
+    # Sidebar — detect local timezone (same logic as report command)
+    cfg = load_config(
+        os.path.join(os.path.dirname(__file__), "..", "config.yaml")
+    )
+    tz = _detect_timezone(cfg.get("timezone", "auto"))
+    selected_server, since, until = _build_sidebar(servers, tz)
 
     # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
     daily = load_raw_summary(since=since, until=until)
