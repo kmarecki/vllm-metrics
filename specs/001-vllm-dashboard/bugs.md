@@ -58,6 +58,20 @@
 
 ---
 
+### BUG-004: Date range presets should use calendar periods (today, week, month, year) plus custom range
+
+- **Severity**: minor
+- **Area**: vllm_metrics/dashboard.py — `_build_sidebar` date range selector
+- **Description**: Current presets (24 hours, 7 days, 30 days, 90 days, All) are relative durations, not calendar periods. Should be: Today, This week, This month, This year, All. Plus allow entering a custom start/end date range.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Open date range dropdown — shows "24 hours", "7 days", "30 days", "90 days", "All"
+- **Actual Result**: Relative duration presets, no custom date input
+- **Expected Result**: Calendar-aligned presets (Today, This week, This month, This year, All) + two date inputs for custom range
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: open
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
@@ -65,9 +79,10 @@
 | BUG-001 | critical | DB connection | resolved | no |
 | BUG-002 | major | date range filter | resolved | no |
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
+| BUG-004 | minor | date range presets | open | no |
 
-**Total Bugs**: 3
-**Open**: 0
+**Total Bugs**: 4
+**Open**: 1
 **In Progress**: 0
 **Resolved**: 3
 **Verified**: 0
