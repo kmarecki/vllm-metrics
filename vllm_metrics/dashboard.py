@@ -208,7 +208,8 @@ def load_latest_snapshots(limit: int = 500) -> pd.DataFrame:
     return pd.DataFrame([dict(r) for r in rows])
 
 
-def load_raw_summary(since: str | None = None, until: str | None = None) -> pd.DataFrame:
+def load_raw_summary(since: str | None = None, until: str | None = None,
+                     tz=None) -> pd.DataFrame:
     """Load aggregated raw_snapshots by date (fallback when daily_stats is empty).
 
     Mirrors the report command's _run_raw_summary logic: sums token counters
@@ -217,10 +218,26 @@ def load_raw_summary(since: str | None = None, until: str | None = None) -> pd.D
     conn = get_conn()
     conditions = []
     params = []
-    if since:
+
+    from datetime import timedelta as _td, time as _tm
+    def _local_date_to_uts(d: str, end_of_day: bool = False) -> int:
+        """Convert local date string to UTC unix timestamp."""
+        parts = d.split("-")
+        dt = datetime(int(parts[0]), int(parts[1]), int(parts[2]), tzinfo=tz)
+        if end_of_day:
+            dt += _td(days=1)
+        return int(dt.astimezone(timezone.utc).timestamp())
+
+    if since and tz:
+        conditions.append("r.timestamp >= ?")
+        params.append(_local_date_to_uts(since))
+    elif since:
         conditions.append("DATE(r.timestring) >= ?")
         params.append(since)
-    if until:
+    if until and tz:
+        conditions.append("r.timestamp < ?")
+        params.append(_local_date_to_uts(until, end_of_day=True))
+    elif until:
         conditions.append("DATE(r.timestring) <= ?")
         params.append(until)
     where = "WHERE " + " AND ".join(conditions) if conditions else ""
@@ -341,7 +358,7 @@ def _build_metric_cards(daily: pd.DataFrame):
         st.metric("Cache Hit Rate", fmt_pct(cache_pct / 100))
 
 
-def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame):
+def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
     """Token volume and generation throughput (FR-003, FR-004)."""
     st.subheader("Token Volume Over Time")
 
@@ -368,7 +385,7 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame):
 
     # Generation throughput
     st.subheader("Generation Throughput")
-    rate_rows = _compute_gen_rates(raw)
+    rate_rows = _compute_gen_rates(raw, tz)
     if rate_rows:
         rate_df = pd.DataFrame(rate_rows)
         fig = px.line(
@@ -385,12 +402,15 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame):
         st.info("No generation throughput data available for the selected period.")
 
 
-def _compute_gen_rates(raw: pd.DataFrame) -> list[dict]:
+def _compute_gen_rates(raw: pd.DataFrame, tz=None) -> list[dict]:
     """Compute gen throughput from consecutive gen-producing snapshots."""
     if raw.empty or "timestamp" not in raw.columns:
         return []
     raw_ts = raw.copy()
-    raw_ts["ts"] = pd.to_datetime(raw_ts["timestamp"], unit="s")
+    if tz and "ts_local" in raw_ts.columns:
+        raw_ts["ts"] = raw_ts["ts_local"]
+    else:
+        raw_ts["ts"] = pd.to_datetime(raw_ts["timestamp"], unit="s")
     raw_ts = raw_ts.sort_values("ts")
 
     rate_rows = []
@@ -560,10 +580,16 @@ def run():
     selected_server, since, until = _build_sidebar(servers, tz)
 
     # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
-    daily = load_raw_summary(since=since, until=until)
+    daily = load_raw_summary(since=since, until=until, tz=tz)
     if daily.empty:
         daily = load_daily_summary(since=since, until=until)
     raw = load_latest_snapshots()
+
+    # Convert timestamps to local timezone
+    if not raw.empty and tz:
+        raw["ts_local"] = pd.to_datetime(raw["timestamp"], unit="s", utc=True).dt.tz_convert(tz)
+    elif not raw.empty:
+        raw["ts_local"] = pd.to_datetime(raw["timestamp"], unit="s")
 
     if selected_server != "All":
         daily = daily[daily["server"] == selected_server]
@@ -588,7 +614,7 @@ def run():
         "\U0001f527 Server Stats",
     ])
     with tab1:
-        _build_tab_token_trends(daily, raw)
+        _build_tab_token_trends(daily, raw, tz)
     with tab2:
         _build_tab_latency_concurrency(daily)
     with tab3:
