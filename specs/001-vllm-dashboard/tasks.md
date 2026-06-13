@@ -140,6 +140,8 @@
 
 - [ ] BF-001 [BUG-001] Add `check_same_thread=False` to sqlite3.connect() in vllm_metrics/db.py — vllm_metrics/db.py
 - [ ] BF-002 [BUG-002] Add raw_snapshots fallback to dashboard — add `load_raw_summary()`, modify `run()` to fall back when daily_stats returns empty — vllm_metrics/dashboard.py
+- [ ] BF-003 [BUG-003] Replace `use_container_width=True` with `width='stretch'` — vllm_metrics/dashboard.py
+- [ ] BF-004 [BUG-004] Replace date range presets with calendar periods (Today, This week, This month, This year, All) + custom date input — vllm_metrics/dashboard.py
 
 ### Phase Dependencies
 - **4a**: No dependencies — start immediately
