@@ -91,6 +91,23 @@
 
 ---
 
+### BUG-006: Generation throughput chart x-axis shows UTC timestamps instead of local timezone
+
+- **Severity**: minor
+- **Area**: vllm_metrics/dashboard.py — `_compute_gen_rates()` and gen throughput chart x-axis
+- **Description**: The Generation Throughput chart's x-axis timestamps are in UTC. They should be displayed in the configured local timezone (Europe/Prague), consistent with the raw snapshots table and other dashboard displays. The rate computation should remain using UTC, only the displayed x-axis labels need conversion.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Go to Token Trends tab
+  3. Check Generation Throughput chart x-axis — timestamps are UTC
+- **Actual Result**: UTC timestamps on x-axis
+- **Expected Result**: Local timezone timestamps on x-axis
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: open
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
@@ -100,9 +117,10 @@
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
 | BUG-004 | minor | date range presets | resolved | no |
 | BUG-005 | major | gen throughput date range | resolved | no |
+| BUG-006 | minor | gen throughput x-axis tz | open | no |
 
-**Total Bugs**: 5
-**Open**: 0
+**Total Bugs**: 6
+**Open**: 1
 **In Progress**: 0
 **Resolved**: 5
 **Verified**: 0
