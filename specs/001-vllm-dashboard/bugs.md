@@ -37,7 +37,7 @@
 - **Actual Result**: Only 2 days of data visible regardless of range selection
 - **Expected Result**: Each range selection should show the corresponding number of days (7, 30, 90, or all available data)
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: 
+- **Plan Ref**: Plan section: BUG-002 Fix: Dashboard only queries daily_stats, missing raw_snapshots fallback
 - **Status**: open
 
 ---
