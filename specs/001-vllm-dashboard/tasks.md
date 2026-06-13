@@ -139,6 +139,7 @@
 ### Bugfix Tasks
 
 - [ ] BF-001 [BUG-001] Add `check_same_thread=False` to sqlite3.connect() in vllm_metrics/db.py — vllm_metrics/db.py
+- [ ] BF-002 [BUG-002] Add raw_snapshots fallback to dashboard — add `load_raw_summary()`, modify `run()` to fall back when daily_stats returns empty — vllm_metrics/dashboard.py
 
 ### Phase Dependencies
 - **4a**: No dependencies — start immediately
