@@ -257,11 +257,11 @@ def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None]:
 
     st.sidebar.header("Date Range")
     range_preset = st.sidebar.selectbox(
-        "Range", ["7 days", "30 days", "90 days", "All"], index=0,
+        "Range", ["24 hours", "7 days", "30 days", "90 days", "All"], index=0,
         label_visibility="collapsed",
     )
     from datetime import timedelta
-    range_map = {"7 days": 7, "30 days": 30, "90 days": 90, "All": 9999}
+    range_map = {"24 hours": 1, "7 days": 7, "30 days": 30, "90 days": 90, "All": 9999}
     days = range_map[range_preset]
     if days < 9999:
         since = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
