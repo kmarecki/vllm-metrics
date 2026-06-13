@@ -72,6 +72,25 @@
 - **Plan Ref**: Plan section: BUG-004 Fix: Replace date range presets with calendar periods + custom range pickers
 - **Status**: resolved
 
+---
+
+### BUG-005: Generation throughput chart shows only a small fragment of the selected date range
+
+- **Severity**: major
+- **Area**: vllm_metrics/dashboard.py — `load_latest_snapshots()` / `_compute_gen_rates()`
+- **Description**: The gen throughput chart in the Token Trends tab only shows a small fragment of time regardless of the selected date range preset. `load_latest_snapshots()` always returned only the last 500 snapshots (~8 hours at 60s intervals), so a "This week" selection would still only show 8 hours of data.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Select "This week" (or any range with >8h of data)
+  3. Look at the Generation Throughput chart — only shows ~8h instead of a week
+- **Actual Result**: Gen throughput chart limited to last 500 snapshots regardless of date range
+- **Expected Result**: Gen throughput chart spans the full selected date range
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: Already fixed in 9460e44 (load_latest_snapshots respects date range) + f799258 (TDD tests T028-T030)
+- **Status**: resolved
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
@@ -80,9 +99,10 @@
 | BUG-002 | major | date range filter | resolved | no |
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
 | BUG-004 | minor | date range presets | resolved | no |
+| BUG-005 | major | gen throughput date range | resolved | no |
 
-**Total Bugs**: 4
+**Total Bugs**: 5
 **Open**: 0
 **In Progress**: 0
-**Resolved**: 4
+**Resolved**: 5
 **Verified**: 0
