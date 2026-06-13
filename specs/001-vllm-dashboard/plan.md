@@ -132,3 +132,13 @@ No constitution violations. Architecture is a single new file reading existing t
 **Constitution check**: Meaningful Statistics — calendar periods show exactly the data the user expects for each period.
 
 **Additive note**: Replace `_build_sidebar()` internals and `run()` call chain. Update `load_raw_summary()` and `load_daily_summary()` to accept optional `until` parameter.
+
+### BUG-006 Fix: Convert gen throughput x-axis timestamps to local timezone
+
+**Root cause**: `_compute_gen_rates()` creates timestamps from UTC `pd.to_datetime(raw["timestamp"], unit="s")` and these raw UTC timestamps are used directly as the x-axis in `px.line()`.
+
+**Fix**: In `_build_tab_token_trends()`, after computing rate_rows, convert the `ts` column from UTC to the configured local timezone before passing to plotly. Use `pd.to_datetime(utc=True).dt.tz_convert(tz)`. The rate computation remains in UTC (correct for arithmetic) — only the x-axis display is converted.
+
+**Constitution check**: Consistency — all other dashboard displays use local time, this makes gen throughput consistent.
+
+**Additive note**: Small change in `_build_tab_token_trends()`, no structural modifications.

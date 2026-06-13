@@ -103,7 +103,7 @@
 - **Actual Result**: UTC timestamps on x-axis
 - **Expected Result**: Local timezone timestamps on x-axis
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: 
+- **Plan Ref**: Plan section: BUG-006 Fix: Convert gen throughput x-axis timestamps to local timezone
 - **Status**: open
 
 ---
