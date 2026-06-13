@@ -69,7 +69,7 @@
 - **Actual Result**: Relative duration presets, no custom date input
 - **Expected Result**: Calendar-aligned presets (Today, This week, This month, This year, All) + two date inputs for custom range
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: 
+- **Plan Ref**: Plan section: BUG-004 Fix: Replace date range presets with calendar periods + custom range pickers
 - **Status**: open
 
 ## Summary
