@@ -2,7 +2,8 @@
 
 import time
 import pytest
-from .conftest import seed_server, seed_model, seed_daily_stats
+from datetime import datetime, timezone
+from .conftest import seed_server, seed_model, seed_daily_stats, seed_snapshot
 
 
 # ── Formatting helpers (T002) ──────────────────────────────────────────
@@ -414,3 +415,102 @@ def test_single_data_point(db_conn, monkeypatch):
     rates = _compute_gen_rates(raw)
     # Single snapshot -> no consecutive pair -> no rates
     assert rates == []
+
+
+# ── T028: load_raw_summary with tz includes snapshots at local-date boundary ─
+
+def test_raw_summary_tz_boundary(db_conn, monkeypatch):
+    """load_raw_summary with tz includes snapshots whose UTC date differs from
+    local date (e.g., UTC 22:00 = local next day at UTC+2)."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    tz = ZoneInfo("Europe/Prague")  # UTC+2 (CEST in June)
+
+    # Compute timestamps for UTC 22:00 and 23:00 on 2026-06-12
+    snap1_dt = datetime(2026, 6, 12, 22, 0, 0, tzinfo=timezone.utc)
+    snap2_dt = datetime(2026, 6, 12, 23, 0, 0, tzinfo=timezone.utc)
+
+    # Snapshot at UTC 22:00 on 2026-06-12 → local 2026-06-13 00:00 (CEST)
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=snap1_dt.timestamp(),
+                  timestring="2026-06-12T22:00:00",
+                  running=2, gen_delta=500)
+
+    # Snapshot at UTC 23:00 on 2026-06-12 → local 2026-06-13 01:00 (CEST)
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=snap2_dt.timestamp(),
+                  timestring="2026-06-12T23:00:00",
+                  running=3, gen_delta=600)
+
+    # Query with local "2026-06-13" — these snapshots have UTC date 2026-06-12
+    # but should be included because in CEST they are already June 13
+    df = load_raw_summary(since="2026-06-13", until="2026-06-13", tz=tz)
+
+    assert not df.empty, f"Snapshots at local boundary should be included, got empty df"
+    assert df.iloc[0]["date"] == "2026-06-13", f"Expected local date 2026-06-13, got {df.iloc[0]['date']}"
+    assert df.iloc[0]["generation_tokens"] == 1100, "Both snapshots should aggregate"
+
+
+# ── T029: load_raw_summary without tz excludes cross-boundary snapshots ──
+
+def test_raw_summary_no_tz_boundary(db_conn, monkeypatch):
+    """Without tz, load_raw_summary uses UTC dates — snapshots from UTC
+    evening are excluded from the next local day's filter."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+
+    snap_dt = datetime(2026, 6, 12, 22, 0, 0, tzinfo=timezone.utc)
+
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-12T22:00:00",
+                  running=2, gen_delta=500)
+
+    # Filter by UTC date 2026-06-13 (no tz) — snapshots have UTC date 2026-06-12
+    df = load_raw_summary(since="2026-06-13", until="2026-06-13")
+
+    assert df.empty, "Without tz, snapshots at UTC 22:00 have yesterday's UTC date"
+
+
+# ── T030: load_latest_snapshots with tz date filtering ──────────────────
+
+def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
+    """load_latest_snapshots with since/until/tz filters by local date."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_latest_snapshots
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    tz = ZoneInfo("Europe/Prague")
+
+    # Snapshot inside local range (UTC 22:00 → local June 13 00:00)
+    inside_dt = datetime(2026, 6, 12, 22, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=inside_dt.timestamp(),
+                  timestring="2026-06-12T22:00:00")
+
+    # Snapshot outside local range (UTC 20:00 → local June 12 22:00)
+    outside_dt = datetime(2026, 6, 12, 20, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=outside_dt.timestamp(),
+                  timestring="2026-06-12T20:00:00")
+
+    df = load_latest_snapshots(since="2026-06-13", until="2026-06-13", tz=tz,
+                                limit=100)
+
+    assert len(df) == 1, "Should include only the snapshot at local June 13"
+    assert abs(float(df.iloc[0]["timestamp"]) - inside_dt.timestamp()) < 1.0

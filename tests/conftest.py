@@ -61,6 +61,8 @@ def _create_schema(conn):
             itl_sum REAL DEFAULT NULL,
             e2e_count REAL DEFAULT NULL,
             e2e_sum REAL DEFAULT NULL,
+            queue_sum REAL DEFAULT NULL,
+            queue_count REAL DEFAULT NULL,
             FOREIGN KEY (server_id) REFERENCES servers(id),
             FOREIGN KEY (model_id) REFERENCES models(id)
         );
@@ -124,6 +126,32 @@ def seed_model(conn, server_id, model_name="deepseek-v4-flash"):
         (server_id, model_name),
     )
     return cursor.fetchone()["id"]
+
+
+def seed_snapshot(conn, server_id, model_id, timestamp, timestring,
+                  running=2, waiting=0, kv_cache=50.0,
+                  prompt_delta=500, gen_delta=1000,
+                  cached_delta=0, success_delta=5,
+                  ttft_sum=0.0, ttft_count=0,
+                  itl_sum=0.0, itl_count=0,
+                  e2e_sum=0.0, e2e_count=0):
+    """Insert a raw_snapshot row for testing."""
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO raw_snapshots
+            (server_id, model_id, timestamp, timestring,
+             num_requests_running, num_requests_waiting, kv_cache_usage_perc,
+             prompt_tokens_total, generation_tokens_total,
+             prompt_tokens_cached_total, request_success_total,
+             ttft_sum, ttft_count, itl_sum, itl_count,
+             e2e_sum, e2e_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (server_id, model_id, timestamp, timestring,
+          running, waiting, kv_cache,
+          prompt_delta, gen_delta, cached_delta, success_delta,
+          ttft_sum, ttft_count, itl_sum, itl_count,
+          e2e_sum, e2e_count))
+    conn.commit()
 
 
 def seed_daily_stats(conn, server_id, model_id, date_str,
