@@ -523,10 +523,10 @@ def run():
     # Sidebar
     selected_server, since = _build_sidebar(servers)
 
-    # Data — mirror report command strategy: daily_stats first, raw_snapshots fallback
-    daily = load_daily_summary(since=since)
+    # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
+    daily = load_raw_summary(since=since)
     if daily.empty:
-        daily = load_raw_summary(since=since)
+        daily = load_daily_summary(since=since)
     raw = load_latest_snapshots()
 
     if selected_server != "All":
