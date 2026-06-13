@@ -38,7 +38,7 @@
 - **Expected Result**: Each range selection should show the corresponding number of days (7, 30, 90, or all available data)
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: Plan section: BUG-002 Fix: Dashboard only queries daily_stats, missing raw_snapshots fallback
-- **Status**: open
+- **Status**: resolved
 
 ---
 
@@ -47,10 +47,10 @@
 | Bug ID | Severity | Area | Status | Needs Clarification |
 |--------|----------|------|--------|---------------------|
 | BUG-001 | critical | DB connection | resolved | no |
-| BUG-002 | major | date range filter | open | no |
+| BUG-002 | major | date range filter | resolved | no |
 
 **Total Bugs**: 2
-**Open**: 1
+**Open**: 0
 **In Progress**: 0
-**Resolved**: 1
+**Resolved**: 2
 **Verified**: 0

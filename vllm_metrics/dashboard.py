@@ -203,6 +203,49 @@ def load_latest_snapshots(limit: int = 500) -> pd.DataFrame:
     return pd.DataFrame([dict(r) for r in rows])
 
 
+def load_raw_summary(since: str | None = None) -> pd.DataFrame:
+    """Load aggregated raw_snapshots by date (fallback when daily_stats is empty).
+
+    Mirrors the report command's _run_raw_summary logic: sums token counters
+    and averages gauges per (date, server, model).
+    """
+    conn = get_conn()
+    where = ""
+    params = []
+    if since:
+        where = "WHERE DATE(r.timestring) >= ?"
+        params.append(since)
+    qry = f"""
+        SELECT
+            DATE(r.timestring) AS date,
+            s.name AS server,
+            m.model_name AS model,
+            SUM(r.prompt_tokens_total)        AS prompt_tokens,
+            SUM(r.generation_tokens_total)    AS generation_tokens,
+            SUM(r.prompt_tokens_cached_total) AS prompt_tokens_cached,
+            SUM(r.request_success_total)      AS completed_requests,
+            SUM(r.num_preemptions_total)      AS preemptions,
+            AVG(r.num_requests_running)       AS avg_running,
+            MAX(r.num_requests_running)       AS max_running,
+            AVG(r.num_requests_waiting)       AS avg_waiting,
+            AVG(r.kv_cache_usage_perc)        AS avg_kv_cache_pct,
+            AVG(r.ttft_sum / NULLIF(r.ttft_count, 0)) * 1000 AS avg_ttft_ms,
+            AVG(r.itl_sum / NULLIF(r.itl_count, 0)) * 1000   AS avg_itl_ms,
+            AVG(r.e2e_sum / NULLIF(r.e2e_count, 0))          AS avg_e2e_s,
+            AVG(r.queue_sum / NULLIF(r.queue_count, 0))      AS avg_queue_s,
+            COUNT(*)                                          AS num_snapshots
+        FROM raw_snapshots r
+        JOIN servers s ON r.server_id = s.id
+        LEFT JOIN models m ON r.model_id = m.id
+        {where}
+        GROUP BY DATE(r.timestring), s.name, m.model_name
+        HAVING m.model_name IS NOT NULL
+        ORDER BY date, s.name, m.model_name
+    """
+    rows = conn.execute(qry, params).fetchall()
+    return pd.DataFrame([dict(r) for r in rows])
+
+
 # ── Dashboard UI ───────────────────────────────────────────────────────
 
 def _build_sidebar(servers_df: pd.DataFrame) -> tuple[str, str | None]:
@@ -480,8 +523,10 @@ def run():
     # Sidebar
     selected_server, since = _build_sidebar(servers)
 
-    # Data
+    # Data — mirror report command strategy: daily_stats first, raw_snapshots fallback
     daily = load_daily_summary(since=since)
+    if daily.empty:
+        daily = load_raw_summary(since=since)
     raw = load_latest_snapshots()
 
     if selected_server != "All":
