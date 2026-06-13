@@ -184,7 +184,7 @@ def load_daily_summary(since: str | None = None, until: str | None = None) -> pd
     return pd.DataFrame([dict(r) for r in rows])
 
 
-def load_latest_snapshots(limit: int = 500, since: str | None = None,
+def load_latest_snapshots(limit: int | None = 500, since: str | None = None,
                           until: str | None = None, tz=None) -> pd.DataFrame:
     """Load recent raw_snapshots rows, optionally filtered by date range."""
     conn = get_conn()
@@ -231,9 +231,10 @@ def load_latest_snapshots(limit: int = 500, since: str | None = None,
         LEFT JOIN models m ON r.model_id = m.id
         {where}
         ORDER BY r.timestamp DESC
-        LIMIT ?
+        {f"LIMIT ?" if limit is not None else ""}
     """
-    params.append(limit)
+    if limit is not None:
+        params.append(limit)
     rows = conn.execute(qry, params).fetchall()
     return pd.DataFrame([dict(r) for r in rows])
 
@@ -614,12 +615,25 @@ def run():
     tz = _detect_timezone(cfg.get("timezone", "auto"))
     selected_server, since, until = _build_sidebar(servers, tz)
 
+    # Compute row limit for raw snapshots based on date range duration
+    # At ~1440 snapshots/day per (server,model) at 60s interval, with
+    # up to ~4 server-model pairs: ~6000/day.  Buffer to 10000/day.
+    if since and until:
+        _sd = datetime.strptime(since, "%Y-%m-%d")
+        _ud = datetime.strptime(until, "%Y-%m-%d")
+        days = (_ud - _sd).days + 1
+        snap_limit = min(days * 10000, 500000)
+    elif since:
+        snap_limit = 10000  # single day
+    else:
+        snap_limit = 500
+
     # Data — mirror report command strategy: raw_snapshots first, daily_stats fallback
     daily = load_raw_summary(since=since, until=until, tz=tz)
     if daily.empty:
         daily = load_daily_summary(since=since, until=until)
     raw = load_latest_snapshots(since=since, until=until, tz=tz,
-                                 limit=5000 if (since or until) else 500)
+                                 limit=snap_limit)
 
     # Convert timestamps to local timezone
     if not raw.empty and tz:

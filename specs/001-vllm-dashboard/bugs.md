@@ -86,7 +86,7 @@
 - **Actual Result**: Gen throughput chart limited to last 500 snapshots regardless of date range
 - **Expected Result**: Gen throughput chart spans the full selected date range
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: Already fixed in 9460e44 (load_latest_snapshots respects date range) + f799258 (TDD tests T028-T030)
+- **Plan Ref**: Fixed: no-LIMIT when date range specified — all snapshots in range loaded, panning works across full period
 - **Status**: resolved
 
 ---
@@ -116,11 +116,11 @@
 | BUG-002 | major | date range filter | resolved | no |
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
 | BUG-004 | minor | date range presets | resolved | no |
-| BUG-005 | major | gen throughput date range | resolved | no |
+| BUG-005 | major | gen throughput date range | open | no |
 | BUG-006 | minor | gen throughput x-axis tz | open | no |
 
 **Total Bugs**: 6
-**Open**: 1
+**Open**: 2
 **In Progress**: 0
-**Resolved**: 5
+**Resolved**: 4
 **Verified**: 0
