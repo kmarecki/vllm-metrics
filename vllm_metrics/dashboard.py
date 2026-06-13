@@ -427,6 +427,12 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
     rate_rows = _compute_gen_rates(raw, tz)
     if rate_rows:
         rate_df = pd.DataFrame(rate_rows)
+        # Convert x-axis timestamps from UTC to local timezone
+        if tz and not rate_df.empty:
+            rate_df["ts"] = (
+                pd.to_datetime(rate_df["ts"], utc=True)
+                .dt.tz_convert(tz)
+            )
         fig = px.line(
             rate_df, x="ts", y="gen_tok_s",
             color="model" if "model" in rate_df.columns else None,

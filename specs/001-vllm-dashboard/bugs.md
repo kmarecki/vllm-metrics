@@ -104,7 +104,7 @@
 - **Expected Result**: Local timezone timestamps on x-axis
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: Plan section: BUG-006 Fix: Convert gen throughput x-axis timestamps to local timezone
-- **Status**: open
+- **Status**: resolved
 
 ---
 
@@ -116,11 +116,11 @@
 | BUG-002 | major | date range filter | resolved | no |
 | BUG-003 | minor | use_container_width deprecation | resolved | no |
 | BUG-004 | minor | date range presets | resolved | no |
-| BUG-005 | major | gen throughput date range | open | no |
-| BUG-006 | minor | gen throughput x-axis tz | open | no |
+| BUG-005 | major | gen throughput date range | resolved | no |
+| BUG-006 | minor | gen throughput x-axis tz | resolved | no |
 
 **Total Bugs**: 6
-**Open**: 2
+**Open**: 0
 **In Progress**: 0
-**Resolved**: 4
+**Resolved**: 6
 **Verified**: 0
