@@ -68,6 +68,20 @@ As an operator of multiple vLLM instances, I want to filter the dashboard by ser
 - Given a server filter is selected, When viewing any chart, Then only data for that server is displayed
 - Given no server filter is set, When viewing charts, Then all servers' data is shown aggregated
 
+### User Story 6 — Date Range Controls (Priority: P2)
+
+As an operator, I want to select a date range using calendar-aligned periods (Today, This week, This month, This year, All) or a custom start/end date, so I can focus on specific time windows.
+
+**Why this priority:** Essential for data exploration, but the dashboard is still functional with defaults.
+
+**Independent Test:** Select each preset and verify the displayed data corresponds to the correct period.
+
+**Acceptance Scenarios:**
+- Given a calendar preset is selected, When viewing charts, Then data is scoped to that period
+- Given "Yesterday" is selected, When viewing charts, Then only the previous day's data is shown
+- Given "Custom..." is selected, When date inputs appear, Then the user can pick any start/end date
+- Given a local timezone is configured, When checking date boundaries, Then data from 00:00 local time is included (not UTC) using shifted date filtering
+
 ## Edge Cases
 
 - What happens when the database is empty or doesn't exist? Dashboard should show a clear informational message, not crash.

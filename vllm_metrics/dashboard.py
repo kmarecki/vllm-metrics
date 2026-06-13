@@ -323,7 +323,7 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
     st.sidebar.header("Date Range")
     today = datetime.now(tz).date()
 
-    presets = ["Today", "This week", "This month", "This year", "All", "Custom..."]
+    presets = ["Today", "Yesterday", "This week", "This month", "This year", "All", "Custom..."]
     preset = st.sidebar.selectbox("Range", presets, index=1,
                                   label_visibility="collapsed")
 
@@ -333,6 +333,10 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
     if preset == "Today":
         since = today.isoformat()
         until = today.isoformat()
+    elif preset == "Yesterday":
+        yesterday = today - __import__("datetime").timedelta(days=1)
+        since = yesterday.isoformat()
+        until = yesterday.isoformat()
     elif preset == "This week":
         from datetime import timedelta
         monday = today - timedelta(days=today.weekday())

@@ -97,3 +97,8 @@
 ## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-005/BF-006)
 - **Commits**: 8ea4c8e, a419136, ad87176
 - **Notes**: Computed snap_limit from date range duration; converted gen throughput x-axis to local tz; removed LIMIT entirely for date-range queries so all data available for panning
+
+## 2026-06-12T12:00:00Z | Refresh → Complete
+- **Skill**: spec-kit-refresh
+- **Artifacts**: spec.md (US6 + Yesterday), plan.md (db.py status, tests count), data-model.md (raw_snapshots Q1, tz docs)
+- **Notes**: Reconciled spec/plan/data-model with code: added calendar presets spec, timezone support, raw_snapshots query priority, db.py modification, 21 tests

@@ -13,7 +13,7 @@ Add a `vllm-metrics dashboard` subcommand that launches a Streamlit web app read
 - **Language/Version:** Python 3.11+
 - **Primary Dependencies:** streamlit, plotly (optional — dashboard only)
 - **Storage:** SQLite (~/.vllm-metrics.db), read-only queries on daily_stats + raw_snapshots + servers + models
-- **Testing:** Manual validation against report command output (no automated UI tests for v1)
+- **Testing:** 21 automated tests (data layer + edge cases). No UI tests.
 - **Target Platform:** Linux (Ubuntu aarch64 primary), localhost access only
 - **Project Type:** CLI tool with optional Streamlit dashboard subcommand
 - **Performance Goals:** Dashboard loads in <5s with 30 days of daily_stats data
@@ -55,7 +55,8 @@ vllm-metrics             # MODIFIED — add 'dashboard' subcommand
 
 | File | Action | Scope |
 |------|--------|-------|
-| `vllm_metrics/dashboard.py` | **CREATE** | ~500 lines: Streamlit app with 4 tabs, NVIDIA theme, all SQL queries |
+| `vllm_metrics/dashboard.py` | **CREATE** | ~680 lines: Streamlit app with 4 tabs, NVIDIA theme, all SQL queries |
+| `vllm_metrics/db.py` | **MODIFY** | +1 line: add `check_same_thread=False` for Streamlit compatibility |
 | `vllm-metrics` (CLI) | **MODIFY** | +5 lines: add `dashboard` subparser + `cmd_dashboard` function |
 
 ## Implementation Phases
