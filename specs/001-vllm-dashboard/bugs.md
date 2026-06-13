@@ -42,15 +42,32 @@
 
 ---
 
+### BUG-003: Deprecated `use_container_width` parameter in Streamlit 1.58
+
+- **Severity**: minor
+- **Area**: vllm_metrics/dashboard.py — 9 calls to `st.plotly_chart()` and `st.dataframe()`
+- **Description**: Streamlit 1.58 deprecates `use_container_width=True` in favor of `width='stretch'`. After 2025-12-31 the old parameter will be removed. Console shows 9 deprecation warnings on every load.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Check terminal output — 9 warnings printed
+- **Actual Result**: Console warnings: `Please replace use_container_width with width.`
+- **Expected Result**: No deprecation warnings. Use `width='stretch'` instead.
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: open
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
 |--------|----------|------|--------|---------------------|
 | BUG-001 | critical | DB connection | resolved | no |
 | BUG-002 | major | date range filter | resolved | no |
+| BUG-003 | minor | use_container_width deprecation | open | no |
 
-**Total Bugs**: 2
-**Open**: 0
+**Total Bugs**: 3
+**Open**: 1
 **In Progress**: 0
 **Resolved**: 2
 **Verified**: 0
