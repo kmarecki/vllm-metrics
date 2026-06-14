@@ -108,6 +108,24 @@
 
 ---
 
+### BUG-007: Custom date range date_inputs don't work in sidebar columns
+
+- **Severity**: major
+- **Area**: vllm_metrics/dashboard.py — `_build_sidebar()` custom date range
+- **Description**: When "Custom..." is selected in the date range dropdown, `st.date_input` widgets are rendered inside `st.columns(2)` without explicit keys. Streamlit fails to properly track widget state in this configuration, so the date inputs don't respond to clicks and the dashboard never updates with the selected range.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Select "Custom..." from the date range dropdown
+  3. Click on a date input to change it
+  4. Nothing happens — dashboard doesn't update
+- **Actual Result**: Date inputs not usable; no way to select custom date range
+- **Expected Result**: Date inputs respond to clicks, dashboard updates with selected range
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: resolved
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
@@ -118,9 +136,10 @@
 | BUG-004 | minor | date range presets | resolved | no |
 | BUG-005 | major | gen throughput date range | resolved | no |
 | BUG-006 | minor | gen throughput x-axis tz | resolved | no |
+| BUG-007 | major | custom date range inputs | resolved | no |
 
-**Total Bugs**: 6
+**Total Bugs**: 7
 **Open**: 0
 **In Progress**: 0
-**Resolved**: 6
+**Resolved**: 7
 **Verified**: 0

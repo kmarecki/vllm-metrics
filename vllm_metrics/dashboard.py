@@ -325,7 +325,7 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
     today = datetime.now(tz).date()
 
     presets = ["Today", "Yesterday", "This week", "This month", "This year", "All", "Custom..."]
-    preset = st.sidebar.selectbox("Range", presets, index=1,
+    preset = st.sidebar.selectbox("Range", presets, index=1, key="date_preset",
                                   label_visibility="collapsed")
 
     since = None
@@ -349,13 +349,8 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
         since = today.replace(month=1, day=1).isoformat()
         until = today.isoformat()
     elif preset == "Custom...":
-        col_a, col_b = st.columns(2)
-        with col_a:
-            d_since = st.date_input("From", value=today - timedelta(days=7),
-                                    label_visibility="collapsed")
-        with col_b:
-            d_until = st.date_input("To", value=today,
-                                    label_visibility="collapsed")
+        d_since = st.sidebar.date_input("From", value=today - timedelta(days=7))
+        d_until = st.sidebar.date_input("To", value=today)
         since = d_since.isoformat()
         until = d_until.isoformat()
     # "All" — since/until remain None (no filter)
