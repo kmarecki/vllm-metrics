@@ -425,6 +425,26 @@ def _build_tab_token_trends(daily: pd.DataFrame, raw: pd.DataFrame, tz=None):
     st.subheader("Generation Throughput")
     rate_rows = _compute_gen_rates(raw)
     if rate_rows:
+        # Insert NaN entries to break lines across gaps >15min (900s)
+        # Plotly px.line by default does not connect across NaN y-values
+        sorted_rows = sorted(rate_rows, key=lambda r: (r["server"], r["model"], r["ts"]))
+        i = 0
+        while i < len(sorted_rows) - 1:
+            cur = sorted_rows[i]
+            nxt = sorted_rows[i + 1]
+            if cur["server"] == nxt["server"] and cur["model"] == nxt["model"]:
+                gap_s = (nxt["ts"] - cur["ts"]).total_seconds()
+                if gap_s > 900:
+                    # Insert NaN row to break the line at the gap midpoint
+                    sorted_rows.insert(i + 1, {
+                        "ts": cur["ts"] + (nxt["ts"] - cur["ts"]) / 2,
+                        "server": cur["server"],
+                        "model": cur["model"],
+                        "gen_tok_s": float("nan"),
+                    })
+                    i += 1  # skip the NaN we just inserted
+            i += 1
+        rate_rows = sorted_rows
         rate_df = pd.DataFrame(rate_rows)
         # Convert x-axis timestamps from UTC to local timezone
         if tz and not rate_df.empty:

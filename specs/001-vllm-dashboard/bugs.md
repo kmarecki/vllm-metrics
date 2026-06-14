@@ -140,7 +140,7 @@
 - **Expected Result**: Line breaks (NaN/split traces) when gap >15 minutes
 - **Requires Clarification**: [x] no / [ ] yes
 - **Plan Ref**: Plan section: BUG-008 Fix: Break gen throughput line across server downtime gaps
-- **Status**: open
+- **Status**: resolved
 
 ---
 
@@ -155,10 +155,10 @@
 | BUG-005 | major | gen throughput date range | resolved | no |
 | BUG-006 | minor | gen throughput x-axis tz | resolved | no |
 | BUG-007 | major | custom date range inputs | resolved | no |
-| BUG-008 | major | gen throughput downtime gaps | open | no |
+| BUG-008 | major | gen throughput downtime gaps | resolved | no |
 
 **Total Bugs**: 8
-**Open**: 1
+**Open**: 0
 **In Progress**: 0
-**Resolved**: 7
+**Resolved**: 8
 **Verified**: 0

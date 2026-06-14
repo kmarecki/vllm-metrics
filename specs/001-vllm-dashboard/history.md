@@ -124,3 +124,8 @@
 - **Skill**: spec-kit-test
 - **Artifacts**: specs/001-vllm-dashboard/bugs.md — BUG-008 appended
 - **Notes**: Logged BUG-008 (major) — gen throughput chart connects line across server downtime gaps
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 4 → Implement (BF-008)
+- **Skill**: spec-kit-implement
+- **Artifacts**: vllm_metrics/dashboard.py — _build_tab_token_trends NaN insertion
+- **Notes**: Insert NaN y-values in rate_rows when gap between consecutive (server,model) points exceeds 900s — Plotly px.line (connectgaps=False default) breaks the line at NaN
