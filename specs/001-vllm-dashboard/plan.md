@@ -143,3 +143,13 @@ No constitution violations. Architecture is a single new file reading existing t
 **Constitution check**: Consistency — all other dashboard displays use local time, this makes gen throughput consistent.
 
 **Additive note**: Small change in `_build_tab_token_trends()`, no structural modifications.
+
+### BUG-008 Fix: Break gen throughput line across server downtime gaps
+
+**Root cause**: `_compute_gen_rates()` builds a flat list of rate dicts with consecutive data points. Plotly's `px.line` connects all points with a continuous line. When a server is down and snapshots stop arriving, the rate at the last point before downtime and the first point after it are adjacent in the list, so Plotly draws a connecting line across the gap.
+
+**Fix**: After computing rate_rows, post-process to insert NaN entries when the time gap between consecutive rows exceeds 15 minutes (900 seconds). Plotly's line chart breaks (draws a gap) when encountering NaN in the y-axis column. Insert copy of the previous row's metadata (server, model) with `ts` set to the break point and `gen_tok_s` set to `float("nan")`.
+
+**Constitution check**: Meaningful Statistics — reporting a line across a server outage is misleading; breaking the line correctly communicates the server was not producing data.
+
+**Additive note**: Post-processing step in `_build_tab_token_trends()` after `rate_rows` is built. No changes to `_compute_gen_rates()` itself.

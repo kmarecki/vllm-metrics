@@ -139,7 +139,7 @@
 - **Actual Result**: Line connects across downtime gaps, misleading the viewer
 - **Expected Result**: Line breaks (NaN/split traces) when gap >15 minutes
 - **Requires Clarification**: [x] no / [ ] yes
-- **Plan Ref**: 
+- **Plan Ref**: Plan section: BUG-008 Fix: Break gen throughput line across server downtime gaps
 - **Status**: open
 
 ---

@@ -144,6 +144,8 @@
 - [ ] BF-004 [BUG-004] Replace date range presets with calendar periods (Today, This week, This month, This year, All) + custom date input — vllm_metrics/dashboard.py
 - [ ] BF-005 [BUG-005] Load all snapshots for selected date range (no arbitrary cap) — vllm_metrics/dashboard.py
 - [ ] BF-006 [BUG-006] Convert gen throughput x-axis timestamps from UTC to local timezone — vllm_metrics/dashboard.py
+- [ ] BF-007 [BUG-007] Fix custom date range date_inputs not working — vllm_metrics/dashboard.py
+- [ ] BF-008 [BUG-008] Break gen throughput line across server downtime gaps >15min — vllm_metrics/dashboard.py
 
 ### Phase Dependencies
 - **4a**: No dependencies — start immediately
