@@ -126,6 +126,24 @@
 
 ---
 
+### BUG-008: Gen throughput chart connects line across server downtime gaps
+
+- **Severity**: major
+- **Area**: vllm_metrics/dashboard.py — `_compute_gen_rates()` / gen throughput chart
+- **Description**: When a server is down, the generation throughput chart draws a continuous line connecting the last data point before downtime to the first point after. The line should break (show no line) when there's a gap >15 minutes between consecutive snapshots, so the chart accurately reflects server unavailability rather than showing a fake "bridge" across the gap.
+- **Steps to Reproduce**:
+  1. Run `./vllm-metrics dashboard`
+  2. Look at Generation Throughput chart
+  3. Find a period where a server was offline for >15 minutes
+  4. Line connects across the gap, suggesting continuous throughput
+- **Actual Result**: Line connects across downtime gaps, misleading the viewer
+- **Expected Result**: Line breaks (NaN/split traces) when gap >15 minutes
+- **Requires Clarification**: [x] no / [ ] yes
+- **Plan Ref**: 
+- **Status**: open
+
+---
+
 ## Summary
 
 | Bug ID | Severity | Area | Status | Needs Clarification |
@@ -137,9 +155,10 @@
 | BUG-005 | major | gen throughput date range | resolved | no |
 | BUG-006 | minor | gen throughput x-axis tz | resolved | no |
 | BUG-007 | major | custom date range inputs | resolved | no |
+| BUG-008 | major | gen throughput downtime gaps | open | no |
 
-**Total Bugs**: 7
-**Open**: 0
+**Total Bugs**: 8
+**Open**: 1
 **In Progress**: 0
 **Resolved**: 7
 **Verified**: 0

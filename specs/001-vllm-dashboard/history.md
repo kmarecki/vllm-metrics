@@ -119,3 +119,8 @@
 - **Artifacts**: vllm_metrics/dashboard.py — _build_sidebar custom date range
 - **Commit**: 6ab9fa9
 - **Notes**: Moved st.date_input from st.columns(2) to st.sidebar.date_input, added explicit key="date_preset" for Streamlit state tracking
+
+## 2026-06-12T12:00:00Z | Phase 5 → Bug Log (BUG-008)
+- **Skill**: spec-kit-test
+- **Artifacts**: specs/001-vllm-dashboard/bugs.md — BUG-008 appended
+- **Notes**: Logged BUG-008 (major) — gen throughput chart connects line across server downtime gaps
