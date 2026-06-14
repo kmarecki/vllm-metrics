@@ -108,3 +108,14 @@
 - **Artifacts**: vllm_metrics/dashboard.py (Q1-Q5), tests/test_dashboard.py (T031)
 - **Commit**: 261cd90
 - **Notes**: Code quality fixes: replaced __import__ hack with proper imports, collapsed snap_limit redundancy, removed unused tz param from _compute_gen_rates, removed redundant outer sort, simplified cache hit rate calc, added T031 test for load_raw_summary(since) without tz
+
+## 2026-06-12T12:00:00Z | Phase 5 → Bug Log (BUG-007)
+- **Skill**: spec-kit-test
+- **Artifacts**: specs/001-vllm-dashboard/bugs.md — BUG-007 appended
+- **Notes**: Logged BUG-007 (major) — custom date range date_inputs not working
+
+## 2026-06-12T12:00:00Z | Bugfix Phase 2 → Implement (BF-007)
+- **Skill**: spec-kit-implement
+- **Artifacts**: vllm_metrics/dashboard.py — _build_sidebar custom date range
+- **Commit**: 6ab9fa9
+- **Notes**: Moved st.date_input from st.columns(2) to st.sidebar.date_input, added explicit key="date_preset" for Streamlit state tracking
