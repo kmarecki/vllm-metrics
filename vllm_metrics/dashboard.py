@@ -325,7 +325,7 @@ def _build_sidebar(servers_df: pd.DataFrame, tz):
     today = datetime.now(tz).date()
 
     presets = ["Today", "Yesterday", "This week", "This month", "This year", "All", "Custom..."]
-    preset = st.sidebar.selectbox("Range", presets, index=1, key="date_preset",
+    preset = st.sidebar.selectbox("Range", presets, index=0, key="date_preset",
                                   label_visibility="collapsed")
 
     since = None
