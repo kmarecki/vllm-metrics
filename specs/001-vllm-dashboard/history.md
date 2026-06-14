@@ -129,3 +129,9 @@
 - **Skill**: spec-kit-implement
 - **Artifacts**: vllm_metrics/dashboard.py — _build_tab_token_trends NaN insertion
 - **Notes**: Insert NaN y-values in rate_rows when gap between consecutive (server,model) points exceeds 900s — Plotly px.line (connectgaps=False default) breaks the line at NaN
+
+## 2026-06-12T12:00:00Z | Phase 6 → Close
+- **Skill**: spec-kit-summarize
+- **Artifacts**: specs/001-vllm-dashboard/close.md, tasks.md (all [X]), bugs.md (8/8 resolved)
+- **Spec Health**: 100%
+- **Notes**: Feature closed — 14/14 FRs fulfilled, 8 bugs resolved, 22 tests passing, 39 tasks complete

@@ -16,9 +16,9 @@
 
 **Purpose**: Create the test framework so all subsequent phases use TDD.
 
-- [ ] T001 [P] [Setup] Create `tests/__init__.py` and `tests/conftest.py` with pytest config, DB fixtures (in-memory SQLite with schema), and shared helpers — tests/conftest.py
-- [ ] T002 [TEST] [Setup] Write test for formatting helpers (fmt_number, fmt_ms, fmt_s, fmt_pct, fmt_decimal) — tests/test_dashboard.py
-- [ ] T003 [Setup] Implement formatting helpers in vllm_metrics/dashboard.py
+- [X] T001 [P] [Setup] Create `tests/__init__.py` and `tests/conftest.py` with pytest config, DB fixtures (in-memory SQLite with schema), and shared helpers — tests/conftest.py
+- [X] T002 [TEST] [Setup] Write test for formatting helpers (fmt_number, fmt_ms, fmt_s, fmt_pct, fmt_decimal) — tests/test_dashboard.py
+- [X] T003 [Setup] Implement formatting helpers in vllm_metrics/dashboard.py
 
 **Checkpoint**: Test framework ready, formatting helpers covered.
 
@@ -30,17 +30,17 @@
 
 ### Tests
 
-- [ ] T004 [TEST] [Setup] Write test for `load_servers()` — returns correct columns, handles empty table — tests/test_dashboard.py
-- [ ] T005 [TEST] [Setup] Write test for `load_daily_summary()` — returns aggregated data, respects date filter — tests/test_dashboard.py
-- [ ] T006 [TEST] [Setup] Write test for `load_latest_snapshots()` — returns correct columns, respects limit — tests/test_dashboard.py
-- [ ] T007 [TEST] [Setup] Write test for gen throughput computation (consecutive snapshots, sane rate filtering, empty edge case) — tests/test_dashboard.py
+- [X] T004 [TEST] [Setup] Write test for `load_servers()` — returns correct columns, handles empty table — tests/test_dashboard.py
+- [X] T005 [TEST] [Setup] Write test for `load_daily_summary()` — returns aggregated data, respects date filter — tests/test_dashboard.py
+- [X] T006 [TEST] [Setup] Write test for `load_latest_snapshots()` — returns correct columns, respects limit — tests/test_dashboard.py
+- [X] T007 [TEST] [Setup] Write test for gen throughput computation (consecutive snapshots, sane rate filtering, empty edge case) — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T008 [P] [Setup] Create `vllm_metrics/dashboard.py` with DB connection (get_conn cached), config loader, formatting helpers (fmt_number, fmt_ms, fmt_s, fmt_pct, fmt_decimal), NVIDIA CSS injection — vllm_metrics/dashboard.py
-- [ ] T009 [P] [Setup] Implement data layer: `load_servers()`, `load_daily_summary()`, `load_latest_snapshots()` — vllm_metrics/dashboard.py
-- [ ] T010 [P] [Setup] Wire `vllm-metrics dashboard` subcommand in CLI — add `dashboard` parser entry, `cmd_dashboard` function that spawns `streamlit run` — vllm-metrics
-- [ ] T010b [P] [Setup] Add ImportError handling in cmd_dashboard — if streamlit not installed, print clear message with `pip install streamlit plotly` hint — vllm-metrics
+- [X] T008 [P] [Setup] Create `vllm_metrics/dashboard.py` with DB connection (get_conn cached), config loader, formatting helpers (fmt_number, fmt_ms, fmt_s, fmt_pct, fmt_decimal), NVIDIA CSS injection — vllm_metrics/dashboard.py
+- [X] T009 [P] [Setup] Implement data layer: `load_servers()`, `load_daily_summary()`, `load_latest_snapshots()` — vllm_metrics/dashboard.py
+- [X] T010 [P] [Setup] Wire `vllm-metrics dashboard` subcommand in CLI — add `dashboard` parser entry, `cmd_dashboard` function that spawns `streamlit run` — vllm-metrics
+- [X] T010b [P] [Setup] Add ImportError handling in cmd_dashboard — if streamlit not installed, print clear message with `pip install streamlit plotly` hint — vllm-metrics
 
 **Checkpoint**: `vllm-metrics dashboard` launches, DB connection works, all query functions tested.
 
@@ -52,14 +52,14 @@
 
 ### Tests
 
-- [ ] T011 [TEST] [US1] Write test for global totals aggregation — verifies summed prompt/gen/cached/requests match expected values — tests/test_dashboard.py
-- [ ] T012 [TEST] [US1] Write test for token volume daily aggregation — verifies group-by-date sums — tests/test_dashboard.py
+- [X] T011 [TEST] [US1] Write test for global totals aggregation — verifies summed prompt/gen/cached/requests match expected values — tests/test_dashboard.py
+- [X] T012 [TEST] [US1] Write test for token volume daily aggregation — verifies group-by-date sums — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T013 [US1] Build sidebar: server list, online/offline status indicators, date range selector — vllm_metrics/dashboard.py
-- [ ] T014 [US1] Build top-level metric cards row: total tokens, prompt, gen, requests, cache hit rate — vllm_metrics/dashboard.py
-- [ ] T015 [US1] Build token trends tab: daily token volume bar chart (prompt + gen + cached), generation throughput line chart — vllm_metrics/dashboard.py
+- [X] T013 [US1] Build sidebar: server list, online/offline status indicators, date range selector — vllm_metrics/dashboard.py
+- [X] T014 [US1] Build top-level metric cards row: total tokens, prompt, gen, requests, cache hit rate — vllm_metrics/dashboard.py
+- [X] T015 [US1] Build token trends tab: daily token volume bar chart (prompt + gen + cached), generation throughput line chart — vllm_metrics/dashboard.py
 
 **Checkpoint**: Token Trends tab renders with real data, metrics match report command output.
 
@@ -71,14 +71,14 @@
 
 ### Tests
 
-- [ ] T016 [TEST] [US2] Write test for concurrency aggregation (avg_running, avg_waiting, max_running) — tests/test_dashboard.py
-- [ ] T017 [TEST] [US2] Write test for latency metrics extraction (avg_ttft_ms, avg_itl_ms, avg_e2e_s) — tests/test_dashboard.py
+- [X] T016 [TEST] [US2] Write test for concurrency aggregation (avg_running, avg_waiting, max_running) — tests/test_dashboard.py
+- [X] T017 [TEST] [US2] Write test for latency metrics extraction (avg_ttft_ms, avg_itl_ms, avg_e2e_s) — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T018 [US2] Build concurrency charts: avg running + waiting line chart, peak running bar chart — vllm_metrics/dashboard.py
-- [ ] T019 [US2] Build KV cache usage area chart — vllm_metrics/dashboard.py
-- [ ] T020 [US2] Build latency metrics tab: TTFT, ITL, E2E time-series charts — vllm_metrics/dashboard.py
+- [X] T018 [US2] Build concurrency charts: avg running + waiting line chart, peak running bar chart — vllm_metrics/dashboard.py
+- [X] T019 [US2] Build KV cache usage area chart — vllm_metrics/dashboard.py
+- [X] T020 [US2] Build latency metrics tab: TTFT, ITL, E2E time-series charts — vllm_metrics/dashboard.py
 
 **Checkpoint**: Latency & Concurrency tab renders, values match report command.
 
@@ -90,14 +90,14 @@
 
 ### Tests
 
-- [ ] T021 [TEST] [US3] Write test for per-model breakdown query (group-by model, summed tokens) — tests/test_dashboard.py
-- [ ] T022 [TEST] [US3] Write test for server filter scoping (all queries respect selected server) — tests/test_dashboard.py
+- [X] T021 [TEST] [US3] Write test for per-model breakdown query (group-by model, summed tokens) — tests/test_dashboard.py
+- [X] T022 [TEST] [US3] Write test for server filter scoping (all queries respect selected server) — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T023 [P] [US3] Build per-model breakdown tab: summary table + token distribution bar chart — vllm_metrics/dashboard.py
-- [ ] T024 [P] [US3] Build server filter dropdown in sidebar, wire to all charts — vllm_metrics/dashboard.py
-- [ ] T025 [US3] Build server stats tab: expandable server cards + raw snapshots table (last 50) — vllm_metrics/dashboard.py
+- [X] T023 [P] [US3] Build per-model breakdown tab: summary table + token distribution bar chart — vllm_metrics/dashboard.py
+- [X] T024 [P] [US3] Build server filter dropdown in sidebar, wire to all charts — vllm_metrics/dashboard.py
+- [X] T025 [US3] Build server stats tab: expandable server cards + raw snapshots table (last 50) — vllm_metrics/dashboard.py
 
 **Checkpoint**: All four tabs render, server filter works.
 
@@ -109,14 +109,14 @@
 
 ### Tests
 
-- [ ] T026 [TEST] [Polish] Write test for empty database edge case (dashboard shows info message, not crash) — tests/test_dashboard.py
-- [ ] T027 [TEST] [Polish] Write test for single-data-point edge case (line chart renders marker) — tests/test_dashboard.py
+- [X] T026 [TEST] [Polish] Write test for empty database edge case (dashboard shows info message, not crash) — tests/test_dashboard.py
+- [X] T027 [TEST] [Polish] Write test for single-data-point edge case (line chart renders marker) — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T028 [Polish] Add empty DB / missing config graceful handling to dashboard.py — vllm_metrics/dashboard.py
-- [ ] T029 [Polish] Update README with dashboard usage, optional dependencies, and screenshots (if available) — README.md
-- [ ] T030 [Polish] Run quickstart.md validation scenarios, fix any issues
+- [X] T028 [Polish] Add empty DB / missing config graceful handling to dashboard.py — vllm_metrics/dashboard.py
+- [X] T029 [Polish] Update README with dashboard usage, optional dependencies, and screenshots (if available) — README.md
+- [X] T030 [Polish] Run quickstart.md validation scenarios, fix any issues
 
 **Checkpoint**: All edge cases handled, README updated, validation passes.
 
@@ -138,14 +138,14 @@
 
 ### Bugfix Tasks
 
-- [ ] BF-001 [BUG-001] Add `check_same_thread=False` to sqlite3.connect() in vllm_metrics/db.py — vllm_metrics/db.py
-- [ ] BF-002 [BUG-002] Add raw_snapshots fallback to dashboard — add `load_raw_summary()`, modify `run()` to fall back when daily_stats returns empty — vllm_metrics/dashboard.py
-- [ ] BF-003 [BUG-003] Replace `use_container_width=True` with `width='stretch'` — vllm_metrics/dashboard.py
-- [ ] BF-004 [BUG-004] Replace date range presets with calendar periods (Today, This week, This month, This year, All) + custom date input — vllm_metrics/dashboard.py
-- [ ] BF-005 [BUG-005] Load all snapshots for selected date range (no arbitrary cap) — vllm_metrics/dashboard.py
-- [ ] BF-006 [BUG-006] Convert gen throughput x-axis timestamps from UTC to local timezone — vllm_metrics/dashboard.py
-- [ ] BF-007 [BUG-007] Fix custom date range date_inputs not working — vllm_metrics/dashboard.py
-- [ ] BF-008 [BUG-008] Break gen throughput line across server downtime gaps >15min — vllm_metrics/dashboard.py
+- [X] BF-001 [BUG-001] Add `check_same_thread=False` to sqlite3.connect() in vllm_metrics/db.py — vllm_metrics/db.py
+- [X] BF-002 [BUG-002] Add raw_snapshots fallback to dashboard — add `load_raw_summary()`, modify `run()` to fall back when daily_stats returns empty — vllm_metrics/dashboard.py
+- [X] BF-003 [BUG-003] Replace `use_container_width=True` with `width='stretch'` — vllm_metrics/dashboard.py
+- [X] BF-004 [BUG-004] Replace date range presets with calendar periods (Today, This week, This month, This year, All) + custom date input — vllm_metrics/dashboard.py
+- [X] BF-005 [BUG-005] Load all snapshots for selected date range (no arbitrary cap) — vllm_metrics/dashboard.py
+- [X] BF-006 [BUG-006] Convert gen throughput x-axis timestamps from UTC to local timezone — vllm_metrics/dashboard.py
+- [X] BF-007 [BUG-007] Fix custom date range date_inputs not working — vllm_metrics/dashboard.py
+- [X] BF-008 [BUG-008] Break gen throughput line across server downtime gaps >15min — vllm_metrics/dashboard.py
 
 ### Phase Dependencies
 - **4a**: No dependencies — start immediately
