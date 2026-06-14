@@ -13,7 +13,7 @@ Add a `vllm-metrics dashboard` subcommand that launches a Streamlit web app read
 - **Language/Version:** Python 3.11+
 - **Primary Dependencies:** streamlit, plotly (optional — dashboard only)
 - **Storage:** SQLite (~/.vllm-metrics.db), read-only queries on daily_stats + raw_snapshots + servers + models
-- **Testing:** 21 automated tests (data layer + edge cases). No UI tests.
+- **Testing:** 22 automated tests (data layer + edge cases). No UI tests.
 - **Target Platform:** Linux (Ubuntu aarch64 primary), localhost access only
 - **Project Type:** CLI tool with optional Streamlit dashboard subcommand
 - **Performance Goals:** Dashboard loads in <5s with 30 days of daily_stats data
@@ -119,7 +119,7 @@ No constitution violations. Architecture is a single new file reading existing t
 **Root cause**: The `_build_sidebar()` function uses relative duration presets (24 hours, 7 days, 30 days, 90 days) mapped to `timedelta(days=N)`. No support for calendar-aligned periods or custom date inputs.
 
 **Fix**: Replace the single selectbox with:
-- A selectbox for presets: "Today", "This week", "This month", "This year", "All", "Custom..."
+- A selectbox for presets: "Today" (default), "Yesterday", "This week", "This month", "This year", "All", "Custom..."
 - When "Custom..." is selected, show two `st.date_input()` widgets for start and end dates
 - Calendar periods compute `since`/`until` from current date:
   - Today: `since = today`, `until = today`
