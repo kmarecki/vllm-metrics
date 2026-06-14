@@ -242,7 +242,7 @@ def _migrate_schema(conn: sqlite3.Connection):
 def connect(db_path: str) -> sqlite3.Connection:
     """Open or create the database with schema."""
     os.makedirs(os.path.dirname(db_path) or '.', exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     _migrate_schema(conn)
