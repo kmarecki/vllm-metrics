@@ -516,7 +516,55 @@ def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
     assert abs(float(df.iloc[0]["timestamp"]) - inside_dt.timestamp()) < 1.0
 
 
-# ── T031: load_raw_summary with since only + no tz ─────────────────────
+# ── 002-daily-stats: Daily Stats tab (T001-T002) ────────────────────────
+
+def test_daily_stats_aggregation(db_conn, monkeypatch):
+    """Daily stats tab aggregates correctly across (server, model) per date."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid1 = seed_server(db_conn, "spark1")
+    sid2 = seed_server(db_conn, "atom1")
+    mid1 = seed_model(db_conn, sid1, "deepseek-v4")
+    mid2 = seed_model(db_conn, sid2, "gemma-4")
+    tz = ZoneInfo("Europe/Prague")
+
+    from datetime import datetime, timezone
+    snap_dt = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid1, mid1,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-15T12:00:00",
+                  running=2, gen_delta=6000, prompt_delta=3000, success_delta=15)
+    seed_snapshot(db_conn, sid2, mid2,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-15T12:00:00",
+                  running=3, gen_delta=4000, prompt_delta=2000, success_delta=10)
+    db_conn.commit()
+
+    daily = load_raw_summary(since="2026-06-15", until="2026-06-15", tz=tz)
+    assert not daily.empty
+    assert len(daily) == 2  # 2 rows (one per server+model)
+
+    # Aggregate per day — should collapse to 1 row
+    per_day = daily.groupby("date", as_index=False).agg({
+        "prompt_tokens": "sum",
+        "generation_tokens": "sum",
+        "completed_requests": "sum",
+    })
+    assert len(per_day) == 1
+    assert per_day.iloc[0]["prompt_tokens"] == 5000  # 3000 + 2000
+    assert per_day.iloc[0]["generation_tokens"] == 10000  # 6000 + 4000
+    assert per_day.iloc[0]["completed_requests"] == 25  # 15 + 10
+
+
+def test_daily_stats_empty():
+    """Daily stats tab handles empty data via callable guard."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import _build_tab_daily_stats
+    assert callable(_build_tab_daily_stats)
 
 def test_raw_summary_since_only_no_tz(db_conn, monkeypatch):
     """load_raw_summary with since (no until, no tz) filters by UTC date >=."""

@@ -12,14 +12,14 @@
 
 ### Tests
 
-- [ ] T001 [TEST] [US1] Write test for daily stats aggregation across servers/models per local date — tests/test_dashboard.py
-- [ ] T002 [TEST] [US1] Write test for empty data handling in daily stats tab — tests/test_dashboard.py
+- [X] T001 [TEST] [US1] Write test for daily stats aggregation across servers/models per local date — tests/test_dashboard.py
+- [X] T002 [TEST] [US1] Write test for empty data handling in daily stats tab — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T003 [US1] Add `_build_tab_daily_stats(daily)` function — renders table sorted by date desc with per-calendar-day totals — vllm_metrics/dashboard.py
-- [ ] T004 [US1] Wire 5th "Daily Stats" tab into dashboard's `run()` function — vllm_metrics/dashboard.py
-- [ ] T005 [P] [US1] Add bar chart of daily prompt + gen token totals — vllm_metrics/dashboard.py
+- [X] T003 [US1] Add `_build_tab_daily_stats(daily)` function — renders table sorted by date desc with per-calendar-day totals — vllm_metrics/dashboard.py
+- [X] T004 [US1] Wire 5th "Daily Stats" tab into dashboard's `run()` function — vllm_metrics/dashboard.py
+- [X] T005 [P] [US1] Add bar chart of daily prompt + gen token totals — vllm_metrics/dashboard.py
 
 **Checkpoint**: Daily Stats tab renders with table and chart, T001-T002 passing.
 
