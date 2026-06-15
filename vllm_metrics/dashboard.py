@@ -596,8 +596,6 @@ def _build_tab_server_stats(raw: pd.DataFrame):
         st.info("No snapshot data available.")
         return
     disp = raw.copy()
-    # Filter out unlabeled (model=NULL) rows — no gauge data to display
-    disp = disp[disp["model"].notna() & (disp["model"] != "")]
     disp["ts"] = pd.to_datetime(disp["timestamp"], unit="s")
     disp = disp[["ts", "server", "model", "num_requests_running",
                   "num_requests_waiting", "kv_cache_usage_perc"]].rename(
