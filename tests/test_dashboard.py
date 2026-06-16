@@ -516,7 +516,101 @@ def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
     assert abs(float(df.iloc[0]["timestamp"]) - inside_dt.timestamp()) < 1.0
 
 
-# ── T031: load_raw_summary with since only + no tz ─────────────────────
+# ── 002-daily-stats: Daily Stats tab (T001-T002) ────────────────────────
+
+def test_daily_stats_aggregation(db_conn, monkeypatch):
+    """Daily stats tab aggregates correctly across (server, model) per date."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid1 = seed_server(db_conn, "spark1")
+    sid2 = seed_server(db_conn, "atom1")
+    mid1 = seed_model(db_conn, sid1, "deepseek-v4")
+    mid2 = seed_model(db_conn, sid2, "gemma-4")
+    tz = ZoneInfo("Europe/Prague")
+
+    from datetime import datetime, timezone
+    snap_dt = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid1, mid1,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-15T12:00:00",
+                  running=2, gen_delta=6000, prompt_delta=3000, success_delta=15)
+    seed_snapshot(db_conn, sid2, mid2,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-15T12:00:00",
+                  running=3, gen_delta=4000, prompt_delta=2000, success_delta=10)
+    db_conn.commit()
+
+    daily = load_raw_summary(since="2026-06-15", until="2026-06-15", tz=tz)
+    assert not daily.empty
+    assert len(daily) == 2  # 2 rows (one per server+model)
+
+    # Aggregate per day — should collapse to 1 row
+    per_day = daily.groupby("date", as_index=False).agg({
+        "prompt_tokens": "sum",
+        "generation_tokens": "sum",
+        "completed_requests": "sum",
+    })
+    assert len(per_day) == 1
+    assert per_day.iloc[0]["prompt_tokens"] == 5000  # 3000 + 2000
+    assert per_day.iloc[0]["generation_tokens"] == 10000  # 6000 + 4000
+    assert per_day.iloc[0]["completed_requests"] == 25  # 15 + 10
+
+
+def test_daily_stats_multiple_dates(db_conn, monkeypatch):
+    """Daily stats aggregation produces separate rows per date, sorted descending."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn, "spark1")
+    mid = seed_model(db_conn, sid, "deepseek-v4")
+    tz = ZoneInfo("Europe/Prague")
+
+    from datetime import datetime, timezone
+    # Three snapshots across two local dates
+    for i, (day, prompt, gen) in enumerate([
+        (15, 3000, 6000),   # 2026-06-15
+        (16, 4000, 8000),   # 2026-06-16
+        (16, 1000, 2000),   # 2026-06-16 (second snapshot same day)
+    ]):
+        snap_dt = datetime(2026, 6, day, 12, 0, 0, tzinfo=timezone.utc)
+        seed_snapshot(db_conn, sid, mid,
+                      timestamp=snap_dt.timestamp(),
+                      timestring=f"2026-06-{day:02d}T12:00:00",
+                      running=2, gen_delta=gen, prompt_delta=prompt, success_delta=10)
+    db_conn.commit()
+
+    daily = load_raw_summary(since="2026-06-15", until="2026-06-16", tz=tz)
+    # After load_raw_summary: 2 rows (June 15: one snapshot, June 16: two aggregated)
+    assert len(daily) == 2
+
+    # Replicate _build_tab_daily_stats aggregation
+    per_day = daily.groupby("date", as_index=False).agg({
+        "prompt_tokens": "sum",
+        "generation_tokens": "sum",
+        "completed_requests": "sum",
+    })
+    per_day = per_day.sort_values("date", ascending=False).reset_index(drop=True)
+
+    assert len(per_day) == 2
+    assert per_day.iloc[0]["date"] == "2026-06-16"  # newest first
+    assert per_day.iloc[1]["date"] == "2026-06-15"
+
+    # Verify per-day totals
+    assert per_day.iloc[0]["prompt_tokens"] == 5000     # 4000 + 1000
+    assert per_day.iloc[0]["generation_tokens"] == 10000  # 8000 + 2000
+    assert per_day.iloc[0]["completed_requests"] == 20    # 10 + 10
+    assert per_day.iloc[1]["prompt_tokens"] == 3000
+    assert per_day.iloc[1]["generation_tokens"] == 6000
+
+    # Verify Total Tokens = prompt + gen
+    assert int(per_day.iloc[0]["prompt_tokens"] + per_day.iloc[0]["generation_tokens"]) == 15000
 
 def test_raw_summary_since_only_no_tz(db_conn, monkeypatch):
     """load_raw_summary with since (no until, no tz) filters by UTC date >=."""

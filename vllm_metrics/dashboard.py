@@ -589,6 +589,83 @@ def _build_tab_per_model(daily: pd.DataFrame):
         st.info("No per-model data available.")
 
 
+def _build_tab_daily_stats(daily: pd.DataFrame):
+    """Per-calendar-day stats, matching report's DAILY TREND section.
+
+    Shows daily totals aggregated by local date: prompt tokens, gen tokens,
+    requests, and concurrent averages. Sorted by date descending (most recent first).
+    """
+    st.subheader("Daily Usage Stats")
+
+    if daily.empty:
+        st.info("No daily stats available.")
+        return
+
+    def _si(val):
+        """Safely convert to int, treating None/NaN as 0."""
+        return int(val) if pd.notna(val) else 0
+
+    # Aggregate across (server, model) per date to get per-day totals
+    date_cols = {
+        "prompt_tokens": "sum",
+        "generation_tokens": "sum",
+        "prompt_tokens_cached": "sum",
+        "completed_requests": "sum",
+        "preemptions": "sum",
+        "avg_running": "mean",
+        "avg_waiting": "mean",
+        "avg_kv_cache_pct": "mean",
+        "num_snapshots": "sum",
+    }
+    available_cols = {k: v for k, v in date_cols.items() if k in daily.columns}
+    per_day = daily.groupby("date", as_index=False).agg(available_cols)
+    per_day = per_day.sort_values("date", ascending=False).reset_index(drop=True)
+
+    # Build display columns
+    display = per_day.copy()
+    display["Total Tokens"] = display["prompt_tokens"].fillna(0).astype(int) + display["generation_tokens"].fillna(0).astype(int)
+    display["Prompt"] = display["prompt_tokens"].fillna(0).astype(int)
+    display["Generation"] = display["generation_tokens"].fillna(0).astype(int)
+    display["Requests"] = display["completed_requests"].fillna(0).astype(int)
+    if "avg_running" in display.columns:
+        display["Avg Running"] = display["avg_running"].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "\u2014")
+        display["Avg Waiting"] = display["avg_waiting"].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "\u2014")
+
+    show_cols = ["date", "Total Tokens", "Prompt", "Generation", "Requests"]
+    if "Avg Running" in display.columns:
+        show_cols += ["Avg Running", "Avg Waiting"]
+
+    st.dataframe(
+        display[show_cols].rename(columns={"date": "Date"}),
+        width='stretch',
+        hide_index=True,
+    )
+
+    # Bar chart of daily totals
+    chart_df = display.sort_values("date").copy()
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=chart_df["date"],
+        y=chart_df["Prompt"],
+        name="Prompt Tokens",
+        marker_color=GREEN,
+    ))
+    fig.add_trace(go.Bar(
+        x=chart_df["date"],
+        y=chart_df["Generation"],
+        name="Gen Tokens",
+        marker_color=ACCENT,
+    ))
+    fig.update_layout(
+        barmode="group",
+        title="Daily Token Totals",
+        xaxis_title="Date",
+        yaxis_title="Tokens",
+        **plotly_theme(),
+    )
+    st.plotly_chart(fig, width='stretch')
+
+
 def _build_tab_server_stats(raw: pd.DataFrame):
     """Server stats tab with raw snapshot table (FR-012)."""
     st.subheader("Recent Snapshots")
@@ -672,10 +749,11 @@ def run():
     st.divider()
 
     # Tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "\U0001f4c8 Token Trends",
         "\u26a1 Latency & Concurrency",
         "\U0001f4cb Per-Model Breakdown",
+        "\U0001f4c5 Daily Stats",
         "\U0001f527 Server Stats",
     ])
     with tab1:
@@ -685,6 +763,8 @@ def run():
     with tab3:
         _build_tab_per_model(daily)
     with tab4:
+        _build_tab_daily_stats(daily)
+    with tab5:
         _build_tab_server_stats(raw)
 
     st.divider()
