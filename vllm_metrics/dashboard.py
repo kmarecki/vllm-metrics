@@ -754,8 +754,10 @@ def run():
             "Run the scraper to collect metrics."
         )
         if interval > 0:
-            time.sleep(interval)
-            st.rerun()
+            st.markdown(
+                f'<meta http-equiv="refresh" content="{interval}">',
+                unsafe_allow_html=True,
+            )
         return
 
     # Metric cards + tabs (all render on every cycle, data served from cache)
@@ -787,10 +789,12 @@ def run():
         + (f"  |  Auto-refresh every {interval}s" if interval > 0 else "  |  Auto-refresh off")
     )
 
-    # Auto-refresh loop
+    # Auto-refresh via browser meta refresh (no loading spinner)
     if interval > 0:
-        time.sleep(interval)
-        st.rerun()
+        st.markdown(
+            f'<meta http-equiv="refresh" content="{interval}">',
+            unsafe_allow_html=True,
+        )
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 
 1. **Read interval** from config.yaml (`cfg.get("interval", 60)`)
 2. **Cache data loading**: Wrap `load_raw_summary()`, `load_daily_summary()`, `load_latest_snapshots()` with `st.cache_data(ttl=interval)` — DB queries run once per interval, results serve all tabs
-3. **Auto-refresh loop**: `time.sleep(interval)` + `st.rerun()` at end of `run()` — if `interval: 0`, skip (no auto-refresh)
+- Auto-refresh via browser `<meta http-equiv="refresh">` tag — no loading spinner, no stop button
 4. **Footer**: Append "Auto-refresh every Ns" or "Auto-refresh off"
 
 ### Auto-Refresh Flow
@@ -46,7 +46,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 │  ├── metric cards (all tabs)
 │  ├── st.tabs() → all 5 render  ← standard Streamlit
 │  ├── footer + caption
-│  └── sleep(interval) + st.rerun()
+│  └── <meta refresh content="{interval}">  ← browser-native, no spinner
 ```
 
 ### Tab Switch Behavior
