@@ -46,11 +46,11 @@ As an operator, I want only the currently visible tab to query/refresh its data 
 ### Functional Requirements
 
 - **FR-001**: Dashboard MUST auto-refresh data on the configured scrape interval (from config.yaml) — only for the currently visible tab
-- **FR-002**: Hidden/inactive tabs MUST NOT fetch or refresh data on auto-refresh cycles
+- **FR-002**: Hidden/inactive tabs MUST NOT re-query the database on auto-refresh cycles
 - **FR-003**: Auto-refresh MUST use the same interval as the scrape/daemon's collection cycle, read from config.yaml
 - **FR-004**: Auto-refresh MUST preserve the user's current state (selected tab, date range, server filter) across refreshes
 - **FR-005**: Auto-refresh MUST fail gracefully on DB errors (no error popup, retry on next cycle)
-- **FR-006**: Each tab's data loading SHOULD be lazy — data fetched only when the tab becomes active, not on initial load
+- **FR-006**: Tab data SHOULD be served from cache across refreshes — no DB re-query on tab switch
 
 ### Key Entities
 
@@ -62,15 +62,17 @@ As an operator, I want only the currently visible tab to query/refresh its data 
 
 ### Measurable Outcomes
 
-- **SC-001**: Dashboard auto-refreshes the active tab every N seconds without user interaction
-- **SC-002**: Switching tabs triggers a fresh data load for the newly active tab only
-- **SC-003**: Hidden tabs show stale/initial data until the operator switches to them
-- **SC-004**: Auto-refresh can be disabled via sidebar control
-- **SC-005**: All existing 24 tests still pass — no regressions
+- **SC-001**: Dashboard auto-refreshes the active tab at the configured interval (from config.yaml) without user interaction
+- **SC-002**: Switching tabs shows data from cache instantly — no DB re-query
+- **SC-003**: Hidden tabs execute zero chart creation code — plotly Figures only created for active tab
+- **SC-004**: Auto-refresh can be disabled by setting `interval: 0` in config.yaml
+- **SC-005**: All existing 24 tests still pass plus 2 new — no regressions
 
 ## Assumptions
 
-- Streamlit's execution model reruns the entire script on each interaction — "skip hidden tabs" means conditional data loading per active tab
-- Existing `load_raw_summary()`, `load_latest_snapshots()` etc. are the data functions that should be lazily called per active tab
-- Auto-refresh mechanism uses Streamlit's `st.rerun()` with `time.sleep()` or `st.empty().write()` patterns
-- Scrape interval is read from config.yaml (same key used by the daemon)
+- Tab bar implemented as a horizontally styled `st.radio()` — not `st.tabs()`
+- Only the active tab's rendering `if` branch executes; hidden tabs create zero plotly Figures
+- Data loading cached via `st.cache_data(ttl=interval)` — tab switch serves cache, no DB re-query
+- Auto-refresh uses `time.sleep(interval)` + `st.rerun()` at end of `run()`
+- Interval read from config.yaml `interval` key (default 60s); `interval: 0` disables auto-refresh
+- Metric cards render per active tab (consistent with visible charts)
