@@ -101,33 +101,6 @@ def inject_css():
         .stMetric [data-testid="metric-value"] {{ color: {GREEN_LIGHT} !important; }}
         div[data-testid="stDecoration"] {{ background-image: none; background-color: {BG3}; }}
         hr {{ border-color: {BG3}; }}
-        /* Tab bar: horizontal radio styled as tabs */
-        div.stRadio > div[role="radiogroup"] {{
-            flex-direction: row !important;
-            gap: 0 !important;
-        }}
-        div.stRadio > div[role="radiogroup"] label {{
-            border: 1px solid #30363d;
-            border-right: none;
-            padding: 6px 20px;
-            margin: 0;
-            background: {BG2};
-            cursor: pointer;
-            color: {TEXT};
-            font-size: 14px;
-        }}
-        div.stRadio > div[role="radiogroup"] label:first-of-type {{
-            border-radius: 6px 0 0 6px;
-        }}
-        div.stRadio > div[role="radiogroup"] label:last-of-type {{
-            border-radius: 0 6px 6px 0;
-            border-right: 1px solid #30363d;
-        }}
-        div.stRadio > div[role="radiogroup"] label[data-selected="true"] {{
-            background: {GREEN};
-            color: #0d1117;
-            font-weight: 600;
-        }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -748,17 +721,7 @@ def run():
 
     interval = cfg.get("interval", 60)
 
-    # Tab bar: horizontal radio styled as tabs
-    TAB_NAMES = [
-        "\U0001f4c8 Token Trends",
-        "\u26a1 Latency & Concurrency",
-        "\U0001f4cb Per-Model Breakdown",
-        "\U0001f4c5 Daily Stats",
-        "\U0001f527 Server Stats",
-    ]
-    active_tab = st.radio("", TAB_NAMES, index=0, label_visibility="collapsed")
-
-    # Data — cached per interval to avoid DB re-query on tab switch or interaction
+    # Data — cached per interval to avoid DB re-query on interaction
     def _cached_raw_summary(s, u, t):
         return st.cache_data(ttl=interval)(load_raw_summary)(since=s, until=u, tz=t)
 
@@ -795,26 +758,27 @@ def run():
             st.rerun()
         return
 
-    # Render only the active tab's charts
+    # Metric cards + tabs (all render on every cycle, data served from cache)
+    st.divider()
+    _build_metric_cards(daily)
     st.divider()
 
-    if active_tab == TAB_NAMES[0]:
-        _build_metric_cards(daily)
-        st.divider()
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "\U0001f4c8 Token Trends",
+        "\u26a1 Latency & Concurrency",
+        "\U0001f4cb Per-Model Breakdown",
+        "\U0001f4c5 Daily Stats",
+        "\U0001f527 Server Stats",
+    ])
+    with tab1:
         _build_tab_token_trends(daily, raw, tz)
-    elif active_tab == TAB_NAMES[1]:
-        _build_metric_cards(daily)
-        st.divider()
+    with tab2:
         _build_tab_latency_concurrency(daily)
-    elif active_tab == TAB_NAMES[2]:
-        _build_metric_cards(daily)
-        st.divider()
+    with tab3:
         _build_tab_per_model(daily)
-    elif active_tab == TAB_NAMES[3]:
-        _build_metric_cards(daily)
-        st.divider()
+    with tab4:
         _build_tab_daily_stats(daily)
-    elif active_tab == TAB_NAMES[4]:
+    with tab5:
         _build_tab_server_stats(raw)
 
     st.divider()
