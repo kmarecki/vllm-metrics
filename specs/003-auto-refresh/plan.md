@@ -11,7 +11,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 ## Technical Context
 
 - **Language/Version:** Python 3.11+
-- **Primary Dependencies:** streamlit, plotly (existing) — no new packages
+- **Primary Dependencies:** streamlit, plotly, streamlit-autorefresh (new) |
 - **Storage:** SQLite (~/.vllm-metrics.db) — unchanged
 - **Testing:** 1 new test (interval config parsing), 25 total
 - **Target Platform:** Linux, localhost access only
@@ -32,7 +32,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 
 1. **Read interval** from config.yaml (`cfg.get("interval", 60)`)
 2. **Cache data loading**: Wrap `load_raw_summary()`, `load_daily_summary()`, `load_latest_snapshots()` with `st.cache_data(ttl=interval)` — DB queries run once per interval, results serve all tabs
-- Auto-refresh via browser `<meta http-equiv="refresh">` tag — no loading spinner, no stop button
+- Auto-refresh via `streamlit-autorefresh` component (`st_autorefresh`) — no full page reload
 4. **Footer**: Append "Auto-refresh every Ns" or "Auto-refresh off"
 
 ### Auto-Refresh Flow

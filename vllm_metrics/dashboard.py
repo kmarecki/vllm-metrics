@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 
 from vllm_metrics import connect, get_db_path, load_config
 from vllm_metrics.report import _detect_timezone
+from streamlit_autorefresh import st_autorefresh
 
 # ── NVIDIA colour palette ──────────────────────────────────────────────
 BG = "#0d1117"
@@ -754,10 +755,7 @@ def run():
             "Run the scraper to collect metrics."
         )
         if interval > 0:
-            st.markdown(
-                f'<meta http-equiv="refresh" content="{interval}">',
-                unsafe_allow_html=True,
-            )
+            st_autorefresh(interval=interval * 1000, key="empty-refresh")
         return
 
     # Metric cards + tabs (all render on every cycle, data served from cache)
@@ -789,12 +787,9 @@ def run():
         + (f"  |  Auto-refresh every {interval}s" if interval > 0 else "  |  Auto-refresh off")
     )
 
-    # Auto-refresh via browser meta refresh (no loading spinner)
+    # Auto-refresh via component (no full page reload, no flicker)
     if interval > 0:
-        st.markdown(
-            f'<meta http-equiv="refresh" content="{interval}">',
-            unsafe_allow_html=True,
-        )
+        st_autorefresh(interval=interval * 1000, key="dash-refresh")
 
 
 if __name__ == "__main__":
