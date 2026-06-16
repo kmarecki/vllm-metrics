@@ -33,29 +33,6 @@ As an operator, I want only the currently visible tab to query/refresh its data 
 - Given the operator switches to a different tab, When the next auto-refresh fires, Then the newly active tab fetches data and the previously active tab stops
 - Given a tab has never been viewed this session, When the operator opens it, Then it fetches fresh data on first view
 
-### User Story 3 — Configurable Refresh Interval (Priority: P2)
-
-As an operator, I want to configure the auto-refresh interval so I can balance data freshness with database load.
-
-**Why this priority:** Useful for tuning — a short interval (10s) for active monitoring vs a longer one (300s) for overview dashboards.
-
-**Independent Test:** Change the refresh interval via sidebar control, verify the new interval is used.
-
-**Acceptance Scenarios:**
-- Given the dashboard sidebar, When the user selects a refresh interval, Then the dashboard uses that interval
-- Given no interval is configured, When the dashboard loads, Then a reasonable default (30s) is used
-- Given the user selects "Off", When auto-refresh was active, Then auto-refresh stops
-
-### User Story 4 — Refresh Status Indicator (Priority: P3)
-
-As an operator, I want to see when the next auto-refresh will happen so I know the dashboard is actively monitoring.
-
-**Why this priority:** Informational — not critical for operation but improves UX.
-
-**Acceptance Scenarios:**
-- Given auto-refresh is active, When viewing the dashboard, Then a countdown or timestamp shows when the next refresh will occur
-- Given auto-refresh is disabled, When viewing the dashboard, Then no countdown is shown or it shows "Refresh: Off"
-
 ## Edge Cases
 
 - What happens when auto-refresh fires while a user is interacting with a control (typing in date input, selecting dropdown)? The refresh should not disrupt user input — use debouncing or skip refresh if user is mid-interaction.
@@ -68,21 +45,18 @@ As an operator, I want to see when the next auto-refresh will happen so I know t
 
 ### Functional Requirements
 
-- **FR-001**: Dashboard MUST auto-refresh data on a configurable interval for the currently visible tab only
+- **FR-001**: Dashboard MUST auto-refresh data on the configured scrape interval (from config.yaml) — only for the currently visible tab
 - **FR-002**: Hidden/inactive tabs MUST NOT fetch or refresh data on auto-refresh cycles
-- **FR-003**: Auto-refresh interval MUST be user-configurable via the sidebar (e.g., 10s, 30s, 60s, 300s, Off)
-- **FR-004**: Dashboard MUST use a reasonable default interval (30 seconds) when none is configured
-- **FR-005**: Auto-refresh MUST preserve the user's current state (selected tab, date range, server filter) across refreshes
-- **FR-006**: Dashboard SHOULD show a refresh status indicator (countdown or last-refreshed timestamp)
-- **FR-007**: Auto-refresh MUST fail gracefully on DB errors (no error popup, retry on next cycle)
-- **FR-008**: Each tab's data loading SHOULD be lazy — data fetched only when the tab becomes active, not on initial load
+- **FR-003**: Auto-refresh MUST use the same interval as the scrape/daemon's collection cycle, read from config.yaml
+- **FR-004**: Auto-refresh MUST preserve the user's current state (selected tab, date range, server filter) across refreshes
+- **FR-005**: Auto-refresh MUST fail gracefully on DB errors (no error popup, retry on next cycle)
+- **FR-006**: Each tab's data loading SHOULD be lazy — data fetched only when the tab becomes active, not on initial load
 
 ### Key Entities
 
-- **Auto-Refresh Interval**: The period (in seconds) between automatic data refreshes, or "Off"
+- **Auto-Refresh Interval**: The period (in seconds) between automatic data refreshes, matching the scrape interval from config.yaml
 - **Active Tab**: The tab currently visible to the user — the only tab that queries data on refresh
 - **Refresh Cycle**: A single automatic data update triggered by the interval timer
-- **Refresh Status Indicator**: A UI element showing the refresh state (countdown, last-refreshed time)
 
 ## Success Criteria
 
@@ -98,5 +72,5 @@ As an operator, I want to see when the next auto-refresh will happen so I know t
 
 - Streamlit's execution model reruns the entire script on each interaction — "skip hidden tabs" means conditional data loading per active tab
 - Existing `load_raw_summary()`, `load_latest_snapshots()` etc. are the data functions that should be lazily called per active tab
-- Auto-refresh mechanism uses Streamlit's `st.rerun()` or `st.empty().write()` patterns
-- Config.yaml may be extended with a default refresh interval if no sidebar override
+- Auto-refresh mechanism uses Streamlit's `st.rerun()` with `time.sleep()` or `st.empty().write()` patterns
+- Scrape interval is read from config.yaml (same key used by the daemon)
