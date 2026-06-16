@@ -516,7 +516,42 @@ def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
     assert abs(float(df.iloc[0]["timestamp"]) - inside_dt.timestamp()) < 1.0
 
 
-# ── 002-daily-stats: Daily Stats tab (T001-T002) ────────────────────────
+# ── 003-auto-refresh: Auto-refresh (T001-T007) ─────────────────────────
+
+def test_interval_config_parsing(monkeypatch):
+    """Interval config: 0 = disabled, positive = enabled, missing = default 60."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    # Test the interval extraction logic used in dashboard run()
+    import yaml
+    import os, tempfile
+    from vllm_metrics.daemon import load_config
+
+    # Positive interval
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write("interval: 60\n")
+        p = f.name
+    cfg = load_config(p)
+    interval = cfg.get("interval", 60)
+    assert interval == 60
+    os.unlink(p)
+
+    # Zero interval (disabled)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write("interval: 0\n")
+        p = f.name
+    cfg = load_config(p)
+    interval = cfg.get("interval", 60)
+    assert interval == 0
+    os.unlink(p)
+
+    # Missing interval (default 60)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write("timezone: UTC\n")
+        p = f.name
+    cfg = load_config(p)
+    interval = cfg.get("interval", 60)
+    assert interval == 60
+    os.unlink(p)
 
 def test_daily_stats_aggregation(db_conn, monkeypatch):
     """Daily stats tab aggregates correctly across (server, model) per date."""

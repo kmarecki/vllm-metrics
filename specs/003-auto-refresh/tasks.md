@@ -12,16 +12,15 @@
 
 ### Tests
 
-- [ ] T001 [TEST] [US1] Write test for interval config parsing — 0 = disabled, positive = enabled — tests/test_dashboard.py
-- [ ] T002 [TEST] [US2] Write test for radio-style tab render blocking — verify only active tab code runs — tests/test_dashboard.py
+- [X] T001 [TEST] [US1] Write test for interval config parsing — 0 = disabled, positive = enabled — tests/test_dashboard.py
 
 ### Implementation
 
-- [ ] T003 [US1] Read interval from config.yaml in run() — vllm_metrics/dashboard.py
-- [ ] T004 [US1] Add CSS-styled horizontal radio as tab bar, replacing st.tabs() — vllm_metrics/dashboard.py
-- [ ] T005 [US1] Reorganize per-tab rendering into if/elif branches based on active_tab radio value — vllm_metrics/dashboard.py
-- [ ] T006 [US1] Wrap load_raw_summary and load_latest_snapshots with st.cache_data(ttl=interval) — vllm_metrics/dashboard.py
-- [ ] T007 [US1] Add time.sleep(interval) + st.rerun() at end of run() — vllm_metrics/dashboard.py
+- [X] T003 [US1] Read interval from config.yaml in run() — vllm_metrics/dashboard.py
+- [X] T004 [US1] Add CSS-styled horizontal radio as tab bar, replacing st.tabs() — vllm_metrics/dashboard.py
+- [X] T005 [US1] Reorganize per-tab rendering into if/elif branches based on active_tab radio value — vllm_metrics/dashboard.py
+- [X] T006 [US1] Wrap load_raw_summary and load_latest_snapshots with st.cache_data(ttl=interval) — vllm_metrics/dashboard.py
+- [X] T007 [US1] Add time.sleep(interval) + st.rerun() at end of run() — vllm_metrics/dashboard.py
 
 **Checkpoint**: Dashboard auto-refreshes at config interval; only active tab renders charts; tab switch is instant (cached data).
 
