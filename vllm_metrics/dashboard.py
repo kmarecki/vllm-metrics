@@ -623,10 +623,10 @@ def _build_tab_daily_stats(daily: pd.DataFrame):
 
     # Build display columns
     display = per_day.copy()
-    display["Total Tokens"] = _si(display["prompt_tokens"]) + _si(display["generation_tokens"])
-    display["Prompt"] = _si(display["prompt_tokens"])
-    display["Generation"] = _si(display["generation_tokens"])
-    display["Requests"] = _si(display["completed_requests"])
+    display["Total Tokens"] = display["prompt_tokens"].fillna(0).astype(int) + display["generation_tokens"].fillna(0).astype(int)
+    display["Prompt"] = display["prompt_tokens"].fillna(0).astype(int)
+    display["Generation"] = display["generation_tokens"].fillna(0).astype(int)
+    display["Requests"] = display["completed_requests"].fillna(0).astype(int)
     if "avg_running" in display.columns:
         display["Avg Running"] = display["avg_running"].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "\u2014")
         display["Avg Waiting"] = display["avg_waiting"].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "\u2014")

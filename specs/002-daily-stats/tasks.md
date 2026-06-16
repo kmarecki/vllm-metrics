@@ -21,6 +21,10 @@
 - [X] T004 [US1] Wire 5th "Daily Stats" tab into dashboard's `run()` function — vllm_metrics/dashboard.py
 - [X] T005 [P] [US1] Add bar chart of daily prompt + gen token totals — vllm_metrics/dashboard.py
 
+### Bugfix Tasks
+
+- [X] BF-001 [BUG-001] Revert _si() helper to original .fillna(0).astype(int) pattern — vllm_metrics/dashboard.py
+
 **Checkpoint**: Daily Stats tab renders with table and chart, T001-T002 passing.
 
 ---

@@ -30,3 +30,8 @@
 - **Skill**: spec-kit-summarize
 - **Artifacts**: specs/002-daily-stats/close.md
 - **Notes**: 9/9 FRs fulfilled, 5/5 tasks complete, 24/24 tests passing
+
+## 2026-06-16T12:00:00Z | Bugfix → Resolved (BUG-001)
+- **Skill**: spec-kit-implement
+- **Artifacts**: vllm_metrics/dashboard.py (_build_tab_daily_stats), specs/002-daily-stats/bugs.md
+- **Notes**: BUG-001 critical — _si() helper called pd.notna() on Series. Reverted to .fillna(0).astype(int). All 24 tests pass.
