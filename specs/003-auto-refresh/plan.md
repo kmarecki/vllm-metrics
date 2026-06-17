@@ -6,7 +6,7 @@
 
 ## Summary
 
-Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (standard `st.tabs()`). Data loading functions are wrapped with `st.cache_data(ttl=interval)` so DB queries run once per refresh interval, not on every rerun. The auto-refresh loop is `time.sleep(interval)` + `st.rerun()` at end of `run()`.
+Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (standard `st.tabs()`). Data loading functions are wrapped with `st.cache_data(ttl=interval)` so DB queries run once per refresh interval, not on every rerun. Auto-refresh via `streamlit-autorefresh` component (`st_autorefresh`), no full page reload.
 
 ## Technical Context
 
@@ -20,7 +20,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 
 ## Constitution Check
 
-**GATE 1 — Minimal Dependencies:** PASS. `st.cache_data`, `time.sleep()`, `st.rerun()` — all already available.
+**GATE 1 — Minimal Dependencies:** PASS. Uses `st.cache_data` and `streamlit-autorefresh` — `st_autorefresh` is the only new dependency (required for no-flicker auto-refresh).
 
 **GATE 2 — Meaningful Statistics:** PASS. Refresh interval matches data collection rate.
 
@@ -46,7 +46,7 @@ Add auto-refresh to the Streamlit dashboard. All 5 tabs render on every cycle (s
 │  ├── metric cards (all tabs)
 │  ├── st.tabs() → all 5 render  ← standard Streamlit
 │  ├── footer + caption
-│  └── <meta refresh content="{interval}">  ← browser-native, no spinner
+│  └── st_autorefresh(interval*1000)  ← JS component, no page reload
 ```
 
 ### Tab Switch Behavior

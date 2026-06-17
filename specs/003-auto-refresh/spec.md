@@ -40,8 +40,7 @@ As an operator monitoring vLLM servers, I want the dashboard to periodically ref
 ### Key Entities
 
 - **Auto-Refresh Interval**: The period (in seconds) between automatic data refreshes, matching the scrape interval from config.yaml
-- **Active Tab**: The tab currently visible to the user — the only tab that queries data on refresh
-- **Refresh Cycle**: A single automatic data update triggered by the interval timer
+- **Refresh Cycle**: A single automatic data refresh triggered by the interval timer
 
 ## Success Criteria
 
@@ -56,5 +55,5 @@ As an operator monitoring vLLM servers, I want the dashboard to periodically ref
 
 - All 5 tabs render on every cycle using `st.tabs()` (Streamlit's standard behavior)
 - Data loading cached via `st.cache_data(ttl=interval)` — same data serves all tabs
-- Auto-refresh via `time.sleep(interval)` + `st.rerun()` at end of `run()`
+- Auto-refresh via `streamlit-autorefresh` component (`st_autorefresh`) — no full page reload
 - Interval read from config.yaml `interval` key (default 60s); `interval: 0` disables auto-refresh
