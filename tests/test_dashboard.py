@@ -521,37 +521,55 @@ def test_latest_snapshots_tz_filter(db_conn, monkeypatch):
 def test_interval_config_parsing(monkeypatch):
     """Interval config: 0 = disabled, positive = enabled, missing = default 60."""
     pytest.importorskip("vllm_metrics.dashboard")
-    # Test the interval extraction logic used in dashboard run()
-    import yaml
     import os, tempfile
     from vllm_metrics.daemon import load_config
 
-    # Positive interval
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("interval: 60\n")
-        p = f.name
-    cfg = load_config(p)
-    interval = cfg.get("interval", 60)
-    assert interval == 60
-    os.unlink(p)
+    for content, expected in [
+        ("interval: 60\n", 60),
+        ("interval: 0\n", 0),
+        ("timezone: UTC\n", 60),
+    ]:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(content)
+            p = f.name
+        cfg = load_config(p)
+        assert cfg.get("interval", 60) == expected
+        os.unlink(p)
 
-    # Zero interval (disabled)
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("interval: 0\n")
-        p = f.name
-    cfg = load_config(p)
-    interval = cfg.get("interval", 60)
-    assert interval == 0
-    os.unlink(p)
 
-    # Missing interval (default 60)
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("timezone: UTC\n")
-        p = f.name
-    cfg = load_config(p)
-    interval = cfg.get("interval", 60)
-    assert interval == 60
-    os.unlink(p)
+def test_cache_load_signature_match(db_conn, monkeypatch):
+    """Verify functions wrapped by st.cache_data accept same arg shapes
+    the dashboard passes (since=, until=, tz=, limit=)."""
+    pytest.importorskip("vllm_metrics.dashboard")
+    from vllm_metrics.dashboard import load_raw_summary, load_daily_summary, load_latest_snapshots
+    from zoneinfo import ZoneInfo
+
+    monkeypatch.setattr("vllm_metrics.dashboard.get_conn", lambda: db_conn)
+
+    sid = seed_server(db_conn)
+    mid = seed_model(db_conn, sid)
+    from datetime import datetime, timezone
+    snap_dt = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    seed_snapshot(db_conn, sid, mid,
+                  timestamp=snap_dt.timestamp(),
+                  timestring="2026-06-15T12:00:00",
+                  running=2, gen_delta=5000, prompt_delta=2000, success_delta=10)
+    db_conn.commit()
+
+    tz = ZoneInfo("Europe/Prague")
+
+    # These are the exact arg shapes the cache call site uses
+    raw = load_raw_summary(since="2026-06-15", until="2026-06-15", tz=tz)
+    assert not raw.empty
+    assert raw.iloc[0]["prompt_tokens"] == 2000
+
+    daily = load_daily_summary(since="2026-06-15", until="2026-06-15")
+    # daily_stats is empty (no seed_daily_stats), so return empty — fallback path
+    assert daily.empty
+
+    snaps = load_latest_snapshots(limit=100, since="2026-06-15", until="2026-06-15", tz=tz)
+    assert not snaps.empty
+    assert "timestamp" in snaps.columns
 
 def test_daily_stats_aggregation(db_conn, monkeypatch):
     """Daily stats tab aggregates correctly across (server, model) per date."""

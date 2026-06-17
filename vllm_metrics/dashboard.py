@@ -722,22 +722,20 @@ def run():
 
     interval = cfg.get("interval", 60)
 
-    # Data — cached per interval to avoid DB re-query on interaction
-    def _cached_raw_summary(s, u, t):
-        return st.cache_data(ttl=interval)(load_raw_summary)(since=s, until=u, tz=t)
-
-    def _cached_daily_summary(s, u):
-        return st.cache_data(ttl=interval)(load_daily_summary)(since=s, until=u)
-
-    def _cached_snapshots(limit, s, u, t):
-        return st.cache_data(ttl=interval)(load_latest_snapshots)(
-            limit=limit, since=s, until=u, tz=t,
-        )
-
-    daily = _cached_raw_summary(since, until, tz)
+    # Data — cached per interval to avoid DB re-query on interaction.
+    # Inline st.cache_data(ttl=N)(func)(args) — no wrapper redefinition per rerun.
+    daily = st.cache_data(ttl=interval)(load_raw_summary)(since=since, until=until, tz=tz)
     if daily.empty:
-        daily = _cached_daily_summary(since, until)
-    raw = _cached_snapshots(snap_limit, since, until, tz)
+        daily = st.cache_data(ttl=interval)(load_daily_summary)(since=since, until=until)
+    raw = st.cache_data(ttl=interval)(load_latest_snapshots)(
+        limit=snap_limit, since=since, until=until, tz=tz,
+    )
+
+    # Clear cache on filter change so user sees fresh data immediately
+    cur_filters = (selected_server, since, until)
+    if "prev_filters" in st.session_state and st.session_state.prev_filters != cur_filters:
+        st.cache_data.clear()
+    st.session_state.prev_filters = cur_filters
 
     # Convert timestamps to local timezone
     if not raw.empty and tz:

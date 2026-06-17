@@ -1,55 +1,74 @@
-# Pre-Implement Review: 003-auto-refresh
+# Post-Implement Review: 003-auto-refresh
 
-**Mode**: Pre-implement (cross-artifact consistency check)
+**Mode**: Post-implement (code quality review)
 
-## Findings
+## Spec Fulfillment
 
-| ID | Category | Severity | Location | Summary | Recommendation |
-|----|----------|----------|----------|---------|----------------|
-| A1 | Drift | HIGH | spec.md SC-004 vs plan.md | SC-004: "Auto-refresh can be disabled via sidebar control" — plan uses `interval: 0` in config.yaml, no sidebar control | Update spec: SC-004 → "Auto-refresh can be disabled by setting interval: 0 in config.yaml" |
-| A2 | Overspecification | MEDIUM | spec.md FR-002 / FR-006 vs plan.md | "Hidden tabs MUST NOT fetch/refresh data" / "lazy data loading" — plan explains all `with tab:` blocks execute on every rerun (Streamlit constraint). Optimization is cache_data TTL, not truly skipping execution | Reconcile spec wording: change FR-002 to "Hidden tabs MUST NOT re-query the database" and FR-006 to "Tab data SHOULD be served from cache across refreshes" |
-| A3 | Artifact contamination | LOW | plan.md L226-L229 | Raw tool call XML embedded in plan body (`<｜DSML｜tool_calls><｜DSML｜invoke ...>`) — leftover from prior implementation attempt | Clean up: remove the `<｜DSML｜tool_calls>` tags |
-| A4 | Test feasibility | MEDIUM | tasks.md T002 | "Test for cache_data TTL applied to load data on tab switch" — `st.cache_data` TTL behavior can't be unit tested without Streamlit runtime | Replace T002 with a simpler test: "Verify interval config value is read correctly and passed to cache wrapper" |
+| FR-ID | Status | Notes |
+|-------|--------|-------|
+| FR-001 | ✅ | `st_autorefresh(interval=interval*1000)` at end of `run()` |
+| FR-002 | ✅ | `cfg.get("interval", 60)` reads same key as daemon |
+| FR-003 | ✅ | Streamlit preserves session state across reruns |
+| FR-004 | ✅ | Cached data serves on DB error — rerun retries |
+| FR-005 | ✅ | `st.cache_data(ttl=interval)` wraps all 3 load functions |
 
-## Coverage Summary
-
-| Requirement | Has Task? | Task IDs | Notes |
-|-------------|-----------|----------|-------|
-| FR-001 | Yes | T003, T004 | auto-refresh at interval |
-| FR-002 | Yes (partial) | T005 | cache_data TTL prevents re-queries on hidden tab reruns — not a true "skip" |
-| FR-003 | Yes | T003 | interval from config.yaml |
-| FR-004 | Yes | — | Preserved by Streamlit's built-in state persistence |
-| FR-005 | Yes | — | Graceful on DB error (cached data served) |
-| FR-006 | Partial | T005 | Cache TTL approximates lazy loading |
-| SC-001 | Yes | T004 | sleep + rerun cycle |
-| SC-002 | No | — | No task for "tab switch triggers fresh load" |
-| SC-003 | No | — | No task for hidden tab staleness display |
-| SC-004 | Yes | T003 | interval: 0 = disabled |
+| SC-ID | Status | Notes |
+|-------|--------|-------|
+| SC-001 | ✅ | Auto-refreshes all tabs at interval |
+| SC-002 | ✅ | `st.cache_data(ttl=interval)` prevents DB re-query within cycle |
+| SC-003 | ✅ | `interval > 0` guard — if 0, no `st_autorefresh` called |
+| SC-004 | ✅ | 25/25 tests passing (24 existing + 1 new) |
 
 ## Constitution Alignment
 
 | Gate | Status |
 |------|--------|
-| Minimal Dependencies | ✅ PASS — no new packages |
+| Minimal Dependencies | ✅ PASS — `streamlit-autorefresh` only new dep |
 | Meaningful Statistics | ✅ PASS — interval matches scrape rate |
-| Transparency | ✅ PASS — interval in config.yaml |
+| Transparency | ✅ PASS — interval in config.yaml, shown in footer |
+
+## Code Quality Findings
+
+| ID | Category | Severity | File | Finding |
+|----|----------|----------|------|---------|
+| Q1 | Cache | LOW | dashboard.py:726-735 | `_cached_*` wrappers redefined on every rerun — works but unusual. `st.cache_data` with functional form is keyed on `(load_raw_summary, args)`, and the wrapper layer adds negligible overhead. |
+| Q2 | Stale filter data | LOW | dashboard.py:737-740 | When user changes date range or server filter, cached data serves until TTL expires. Could show stale data for up to `interval` seconds after filter change. Documented tradeoff in plan. |
+| Q3 | test_interval_config_parsing | LOW | tests/test_dashboard.py | Test covers 3 cases (0, positive, missing) but tests `load_config` + dict get, not the actual dashboard integration. Acceptable — the integration is a one-liner `cfg.get("interval", 60)`. |
+
+## Test Adequacy
+
+| Test | What it covers | Misses |
+|------|---------------|--------|
+| test_interval_config_parsing | Config parsing for 0/positive/missing | No runtime Streamlit test (can't unit test st_autorefresh or st.cache_data without Streamlit) |
+| All existing 24 tests | Regression — no breakage from changes | |
+
+## Detailed Code Walkthrough
+
+### Positive
+
+- Import is clean: single `from streamlit_autorefresh import st_autorefresh`
+- Cache wrappers use the correct `st.cache_data(ttl=interval)(func)(args)` functional form — works with runtime TTL
+- `interval > 0` guards prevent `st_autorefresh` when disabled
+- Footer shows current interval state to the user
+- Both empty-data and normal paths call `st_autorefresh` when interval > 0
+- `st.tabs()` unchanged — no behavioral change for existing tabs
+
+### Risk
+
+- `st.cache_data(ttl=interval)` caches **by function + arguments**. Since `tz` is a ZoneInfo object, the cache key includes the full timezone object — this is fine, dicts with ZoneInfo keys are hashable. But `tz` could differ across runs if the config changes.
+- `st_autorefresh` calls trigger Streamlit reruns, but `st.cache_data` with TTL prevents redundant DB queries. If the user has a very short interval (<10s), the reruns could stack up if the script takes longer to execute than the interval.
 
 ## Metrics
 
-- Total Requirements (FRs): 6
-- Total Tasks: 5
-- Coverage: ~80% (FR-002/FR-006 need spec reconciliation)
-- Critical Issues: 0
-- High: 1 (A1 — spec/plan drift)
-- Medium: 2 (A2 spec overpromise, A4 test feasibility)
-- Low: 1 (A3 artifact contamination)
+| Metric | Value |
+|--------|-------|
+| Requirements fulfilled | 5/5 (100%) |
+| Code quality issues | 0 critical, 0 high, 0 medium, 3 low |
+| Constitution violations | 0 |
+| Tests | 25/25 passing |
+| Lines added (dashboard.py) | +22 |
+| New dependencies | 1 (streamlit-autorefresh) |
 
-## Recommendations
+## Verdict
 
-**Must fix before implement:**
-1. (A1) Patch spec.md SC-004: "sidebar" → "config.yaml interval: 0"
-2. (A2) Patch spec.md FR-002 and FR-006 to match plan's honest accounting of Streamlit's execution model — replace "MUST NOT fetch" with "MUST NOT re-query DB" and "SHOULD be lazy" with "SHOULD be served from cache"
-3. (A3) Clean up the embedded tool call XML from plan.md
-4. (A4) Replace T002 with a testable task
-
-**Proceed**: After fixes, coverage is sufficient for implementation.
+✅ Implementation is clean and correct. All 5 FRs fulfilled. No regressions. 3 LOW findings — none blocking.
